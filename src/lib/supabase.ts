@@ -1,11 +1,18 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-// Mode demo: jalan tanpa backend pakai data mock
-export const isMockMode = !url || !anon;
+const supabaseKey =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-export const supabase: SupabaseClient | null = isMockMode
-  ? null
-  : createClient(url, anon);
+export const isMockMode =
+  !supabaseUrl || !supabaseKey;
+
+export const supabase =
+  !isMockMode
+    ? createClient(
+        supabaseUrl!,
+        supabaseKey!,
+      )
+    : null;

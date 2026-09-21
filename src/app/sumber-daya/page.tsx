@@ -23,19 +23,19 @@ const RESOURCES: Resource[] = [
   {
     category: 'Pengaduan',
     title: 'Satpol PP DIY',
-    contact: '(0274) 512000 / 112',
+    contact: '(0274) 5021060',
     description: 'Pengaduan ketertiban & keamanan wilayah, termasuk kejahatan jalanan. Tersedia juga layanan aduan masyarakat via Geoportal DIY.',
   },
   {
     category: 'Pengaduan',
     title: 'Hotline KemenPPPA 129',
     contact: '129',
-    description: 'Layanan pengaduan perlindungan perempuan & anak — relevan bila korban adalah anak/remaja.',
+    description: 'Layanan pengaduan perlindungan perempuan & anak, relevan bila korban adalah anak/remaja.',
   },
   {
     category: 'Rehabilitasi',
     title: 'Dinas Sosial DIY',
-    contact: '(0274) 512211',
+    contact: '(0274) 514932',
     description: 'Koordinasi program rehabilitasi sosial, termasuk pendampingan remaja terlibat kejahatan jalanan.',
   },
   {
@@ -48,7 +48,7 @@ const RESOURCES: Resource[] = [
     category: 'Pemantau Independen',
     title: 'Jogja Police Watch (JPW)',
     contact: 'Kanal media sosial JPW',
-    description: 'Lembaga pemantau independen yang rutin mencatat dan merilis data kasus kejahatan jalanan di DIY — rujukan seed data Gardu.',
+    description: 'Lembaga pemantau independen yang rutin mencatat dan merilis data kasus kejahatan jalanan di DIY, rujukan seed data Gardu.',
   },
 ];
 
@@ -88,8 +88,7 @@ export default function SumberDayaPage() {
 
       <Reveal delay={0.2}>
         <div className="mt-10 rounded-3xl border border-amber-400/20 bg-amber-400/5 p-6 text-sm leading-relaxed text-zinc-500">
-          <span className="font-semibold text-amber-300">Catatan:</span> daftar kontak perlu
-          diverifikasi ulang menjelang presentasi. Prinsip sistem: tidak ada penamaan,
+          <span className="font-semibold text-amber-300">Catatan:</span> Prinsip Gardu tidak ada penamaan,
           pelacakan, atau tindakan main hakim sendiri terhadap terduga pelaku.
         </div>
       </Reveal>

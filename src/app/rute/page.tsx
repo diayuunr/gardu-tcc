@@ -508,7 +508,7 @@ export default function RutePage() {
 
             <p className="text-xs leading-relaxed text-zinc-600">
               Sistem menandai tingkat risiko di sepanjang
-              rute — bukan mesin navigasi turn-by-turn.
+              rute, bukan mesin navigasi turn-by-turn.
             </p>
 
           </form>

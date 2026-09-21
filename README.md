@@ -3,7 +3,7 @@
 # 🛡️ Gardu
 **Sistem Kesadaran Komunitas dan Rute Aman Warga terhadap Kejahatan Jalanan (Klitih) di Yogyakarta**
 
-[![Vercel](https://img.shields.io/badge/Vercel-Visit%20Live%20Site-A5B4FC?style=for-the-badge&logo=vercel&logoColor=white)](#)
+[![Vercel](https://img.shields.io/badge/Vercel-Visit%20Live%20Site-A5B4FC?style=for-the-badge&logo=vercel&logoColor=white)](https://gardu-tcc.vercel.app/)
 
 <p align="center">
   <a href="#gambaran-umum">Gambaran Umum</a> •
@@ -276,12 +276,12 @@ Berikut adalah cuplikan antarmuka dari Gardu:
 
 | **Landing Page** | **Lapor Kejadian** |
 | :---: | :---: |
-| <img src="frontend/public/screenshots/landing.png" alt="Landing Page" width="100%"/> | <img src="frontend/public/screenshots/lapor.png" alt="Lapor Kejadian" width="100%"/> |
+| <img src="frontend/public/screenshots/landing-page.jpeg" alt="Landing Page" width="100%"/> | <img src="frontend/public/screenshots/lapor.jpeg" alt="Lapor Kejadian" width="100%"/> |
 | *Kesadaran Komunitas* | *Pelaporan Anonim* |
 
 | **Dasbor Peta Kerawanan** | **Cek Rute Aman** |
 | :---: | :---: |
-| <img src="frontend/public/screenshots/peta.png" alt="Dasbor Peta" width="100%"/> | <img src="frontend/public/screenshots/rute.png" alt="Cek Rute Aman" width="100%"/> |
+| <img src="frontend/public/screenshots/heatmap.jpeg" alt="Dasbor Peta" width="100%"/> | <img src="frontend/public/screenshots/cekrute.jpeg" alt="Cek Rute Aman" width="100%"/> |
 | *Heatmap Interaktif* | *Rekomendasi Rute* |
 
 ---

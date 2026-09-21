@@ -605,7 +605,7 @@ export default function PetaPage() {
             {/* DISCLAIMER */}
             <div className="rounded-3xl border border-emerald-400/20 bg-emerald-400/5 p-5 text-xs leading-relaxed text-zinc-500">
               Data ditampilkan agregat
-              per area — tanpa identitas
+              per area, tanpa identitas
               individu mana pun
               (REQ-F-042). Skor bersifat
               prediktif, bukan klaim data

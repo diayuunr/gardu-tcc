@@ -26,13 +26,13 @@ const FEATURES = [
   },
   {
     title: 'Cek Rute Aman',
-    desc: 'Asal, tujuan, jam berangkat — sistem memperingatkan zona berisiko beserta saran.',
+    desc: 'Asal, tujuan, jam berangkat, sistem memperingatkan zona berisiko beserta saran.',
     icon: 'M9 20l-5.45-2.72A1 1 0 014 16.38V5.62a1 1 0 011.45-.9L9 7m0 13l6-3m-6 3V7m6 10l4.55 2.28a1 1 0 001.45-.9V8.62a1 1 0 00-.55-.9L15 5m0 12V5m0 0L9 7',
     href: '/rute',
   },
   {
     title: 'Peta Heatmap Publik',
-    desc: 'Dasbor peta interaktif tanpa login — kesadaran situasional untuk seluruh warga.',
+    desc: 'Dasbor peta interaktif tanpa login, kesadaran situasional untuk seluruh warga.',
     icon: 'M9 20l-5.45-2.72A1 1 0 014 16.38V5.62a1 1 0 011.45-.9L9 7m0 13l6-3m-6 3V7m6 10l4.55 2.28a1 1 0 001.45-.9V8.62a1 1 0 00-.55-.9L15 5m0 12V5m0 0L9 7',
     href: '/peta',
   },
@@ -163,17 +163,15 @@ export default async function LandingPage() {
 
             <Reveal delay={0.1}>
               <h1 className="mt-6 font-display text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl">
-                Jaga jalurmu,
+                Tahu Jalannya,
                 <br />
-                <span className="text-gradient">jaga Jogjanya.</span>
+                <span className="text-gradient">Tahu Risikonya.</span>
               </h1>
             </Reveal>
 
             <Reveal delay={0.2}>
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-zinc-400">
-                Gardu membantu warga dan mahasiswa membangun kesadaran situasional
-                terhadap kejahatan jalanan (klitih): lapor anonim, pantau zona rawan
-                berbasis prediksi AI, dan periksa rute sebelum berangkat.
+              <p className="mt-6 max-w-xl text-md leading-relaxed text-zinc-400">
+                Gardu membantu warga dan mahasiswa lebih waspada saat beraktivitas di Yogyakarta, mulai dari melaporkan kejadian secara anonim, mengenali area rawan, hingga memeriksa kondisi rute sebelum berangkat.
               </p>
             </Reveal>
 
@@ -359,7 +357,7 @@ export default async function LandingPage() {
 
             <p className="mt-4 max-w-2xl text-zinc-500">
               Setiap agent punya peran spesifik dan diorkestrasi sebagai alur yang
-              dapat ditelusuri — bukan sekadar pemanggilan API tersebar.
+              dapat ditelusuri, bukan sekadar pemanggilan API tersebar.
             </p>
           </Reveal>
 
@@ -455,9 +453,7 @@ export default async function LandingPage() {
             </h2>
 
             <p className="relative mx-auto mt-4 max-w-2xl text-zinc-400">
-              Gardu secara sengaja tidak menyediakan fitur identifikasi,
-              pelacakan, atau penamaan terduga pelaku. Fokus kami: keselamatan
-              warga, rehabilitasi, dan dukungan — sesuai prinsip etika sistem.
+              Gardu berfokus pada pencegahan dan keselamatan warga. Tidak ada identifikasi, pelacakan, atau penamaan terduga pelaku. Informasi yang dikumpulkan digunakan untuk membantu memahami kondisi sekitar dan membuat perjalanan lebih aman.
             </p>
 
             <div className="relative mt-8 flex flex-wrap justify-center gap-4">
