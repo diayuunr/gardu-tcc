@@ -24,6 +24,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "https://gardu-tcc-ten.vercel.app",
+        "https://gardu-tcc.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
