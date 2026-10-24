@@ -2,47 +2,11 @@ import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import HeroCard from '@/components/HeroCard';
 import { createClient } from '@/lib/supabase/server';
+import CountUp from '@/components/CountUp';
+import { FeaturesSection } from '@/components/FeaturesSection';
 
 export const dynamic = 'force-dynamic';
 
-const FEATURES = [
-  {
-    title: 'Pelaporan Anonim',
-    desc: 'Laporkan titik rawan dengan cepat tanpa perlu membuat akun atau membagikan identitas.',
-    icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM4 21a8 8 0 0116 0',
-    href: '/lapor',
-  },
-  {
-    title: 'Ekstraksi & Klasterisasi AI',
-    desc: 'AI mengekstrak lokasi, waktu, jenis kejadian, lalu mengelompokkan laporan.',
-    icon: 'M9 12l2 2 4-4M12 3l7 4v5c0 5-3.2 8.6-7 10-3.8-1.4-7-5-7-10V7l7-4z',
-    href: '/lapor',
-  },
-  {
-    title: 'Prediksi Zona Rawan',
-    desc: 'Kenali area dan waktu yang berpotensi rawan berdasarkan pola laporan yang terkumpul.',
-    icon: 'M3 17l6-6 4 4 8-8M21 7v6h-6',
-    href: '/peta',
-  },
-  {
-    title: 'Cek Rute Aman',
-    desc: 'Masukkan titik awal dan tujuan untuk melihat area rawan di sepanjang perjalanan.',
-    icon: 'M9 20l-5.45-2.72A1 1 0 014 16.38V5.62a1 1 0 011.45-.9L9 7m0 13l6-3m-6 3V7m6 10l4.55 2.28a1 1 0 001.45-.9V8.62a1 1 0 00-.55-.9L15 5m0 12V5m0 0L9 7',
-    href: '/rute',
-  },
-  {
-    title: 'Peta Heatmap Publik',
-    desc: 'Lihat sebaran titik rawan melalui peta interaktif yang dapat diakses siapa saja.',
-    icon: 'M9 20l-5.45-2.72A1 1 0 014 16.38V5.62a1 1 0 011.45-.9L9 7m0 13l6-3m-6 3V7m6 10l4.55 2.28a1 1 0 001.45-.9V8.62a1 1 0 00-.55-.9L15 5m0 12V5m0 0L9 7',
-    href: '/peta',
-  },
-  {
-    title: 'Sumber Daya & Kontak',
-    desc: 'Akses cepat ke satgas, layanan pengaduan, dan program rehabilitasi remaja.',
-    icon: 'M3 5a2 2 0 012-2h3.3a1 1 0 01.9.7L10.6 7a1 1 0 01-.3 1.1L8.2 9.9a14 14 0 006.9 6.9l1.8-2.1a1 1 0 011.1-.3l3.3 1.3a1 1 0 01.7.9V19a2 2 0 01-2 2h-1C9.7 21 3 14.3 3 6V5z',
-    href: '/sumber-daya',
-  },
-];
 
 const AGENTS = [
   {
@@ -132,7 +96,7 @@ export default async function LandingPage() {
   return (
     <div>
       {/* HERO */}
-      <section className="relative overflow-hidden pb-24 pt-36">
+      <section className="relative overflow-hidden pb-24 pt-30">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-32 left-1/2 h-[480px] w-[720px] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
 
@@ -216,21 +180,21 @@ export default async function LandingPage() {
               <div className="mt-12 grid max-w-lg grid-cols-3 divide-x divide-line rounded-3xl border border-line bg-panel/50 backdrop-blur">
                 {[
                   {
-                    v: `${totalReports ?? 0}+`,
+                    v: totalReports ?? 0,
                     l: 'Laporan total',
                   },
                   {
-                    v: `${monitoredAreas ?? 0}+`,
+                    v: monitoredAreas ?? 0,
                     l: 'Area terpantau',
                   },
                   {
-                    v: `${riskPredictions ?? 0}+`,
+                    v: riskPredictions ?? 0,
                     l: 'Prediksi Risiko',
                   },
-                ].map((s) => (
+                ].map((s, i) => (
                   <div key={s.l} className="px-5 py-4">
                     <p className="font-display text-2xl font-bold text-emerald-300">
-                      {s.v}
+                      <CountUp value={s.v} suffix="+" />
                     </p>
 
                     <p className="mt-1 text-[11px] leading-snug text-zinc-500">
@@ -279,68 +243,7 @@ export default async function LandingPage() {
       </div>
 
       {/* FITUR */}
-      <section className="container-x py-24">
-        <Reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">
-            Fitur Utama
-          </p>
-
-          <h2 className="mt-3 max-w-2xl font-display text-3xl font-bold text-white sm:text-4xl">
-            Satu platform, <br></br> dari laporan menuju keselamatan.
-          </h2>
-        </Reveal>
-
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((f, i) => (
-            <Reveal key={f.title} delay={i * 0.07}>
-              <Link
-                href={f.href}
-                className="group glass-card block h-full p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-400/30 hover:shadow-glow"
-              >
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-400/10 ring-1 ring-emerald-400/25 transition group-hover:bg-emerald-400/20">
-                  <svg
-                    width="21"
-                    height="21"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#34d399"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d={f.icon} />
-                  </svg>
-                </span>
-
-                <h3 className="mt-5 font-display text-lg font-semibold text-white">
-                  {f.title}
-                </h3>
-
-                <p className="mt-2 text-sm leading-snug text-zinc-500">
-                  {f.desc}
-                </p>
-
-                <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 opacity-0 transition-all duration-300 group-hover:opacity-100">
-                  Buka fitur
-
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 12h14M13 6l6 6-6 6" />
-                  </svg>
-                </span>
-              </Link>
-            </Reveal>
-          ))}
-        </div>
-      </section>
+      <FeaturesSection />
 
       {/* AI AGENTS */}
       <section className="border-y border-line bg-panel/40 py-24">

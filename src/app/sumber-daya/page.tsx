@@ -67,7 +67,7 @@ const RESOURCES: Resource[] = [
     title: 'Jogja Police Watch',
     contact: 'Kanal media sosial JPW',
     description:
-      'Lembaga pemantau independen yang dapat menjadi rujukan untuk mengikuti informasi, laporan, dan perhatian publik terkait isu kepolisian di DIY.',
+      'Lembaga pemantau independen yang dapat menjadi rujukan untuk mengikuti informasi, laporan, dan perhatian publik terkait isu kepolisian di DI Yogyakarta.',
     question: 'Ingin memantau kasus?',
   },
 ];
@@ -111,13 +111,13 @@ export default function SumberDayaPage() {
     /^[\d()+\-\s]+$/.test(contact);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#071b18] via-[#0b2924] to-[#102f35] pb-20 pt-28 text-white">
+    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-black via-[#0b2924] to-[#102f35] pb-20 pt-28 text-white">
       {/* Background glow */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-32 top-20 h-80 w-80 rounded-full bg-emerald-500/10 blur-[100px]" />
         <div className="absolute -right-32 top-1/3 h-96 w-96 rounded-full bg-cyan-400/10 blur-[120px]" />
         <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-teal-400/10 blur-[100px]" />
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/40" />
         <div
           className="absolute inset-0 opacity-[0.07]"
           style={{
@@ -142,14 +142,14 @@ export default function SumberDayaPage() {
               Gardu Resource Center
             </motion.div>
 
-            <h1 className="font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl">
+            <h1 className="font-display font-bold leading-tight tracking-tight text-5xl">
               Temukan <br className="hidden sm:block" />
               <span className="block bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-300 bg-clip-text text-transparent">
                 Bantuan di Sekitarmu
               </span>
             </h1>
 
-            <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-slate-300 sm:text-base">
+            <p className="mx-auto mt-5 max-w-2xl text-xs leading-snug text-slate-300 sm:text-base">
               Pilih pertanyaan di sekeliling halaman untuk menemukan
               kontak darurat, kanal pengaduan, pendampingan sosial,
               dan informasi pemantauan kasus kejahatan jalanan.
@@ -216,7 +216,7 @@ export default function SumberDayaPage() {
                       {activeResource.contact}
                     </p>
 
-                    <p className="mt-3 text-xs leading-6 text-slate-300">
+                    <p className="mt-3 text-xs leading-snug text-slate-300">
                       {activeResource.description}
                     </p>
 
@@ -226,7 +226,6 @@ export default function SumberDayaPage() {
                         className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-300 px-4 py-3 text-sm font-bold text-[#08251f] transition hover:brightness-110"
                       >
                         <span>Hubungi Kontak</span>
-                        <span aria-hidden="true">↗</span>
                       </a>
                     ) : (
                       <p className="mt-5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 text-xs text-slate-300">
@@ -237,9 +236,9 @@ export default function SumberDayaPage() {
                     <button
                       type="button"
                       onClick={() => setSelected(null)}
-                      className="mt-3 text-xs text-emerald-200/70 transition hover:text-emerald-200"
+                      className="mt-3 text-xs text-emerald-200/70 transition hover:text-emerald-200 cursor-pointer"
                     >
-                      ← Kembali ke semua pilihan
+                      Kembali ke semua pilihan
                     </button>
                   </motion.div>
                 ) : (
@@ -271,7 +270,7 @@ export default function SumberDayaPage() {
                       Temukan Bantuanmu
                     </h2>
 
-                    <p className="mt-3 text-sm leading-6 text-slate-300">
+                    <p className="mt-3 text-sm leading-snug text-slate-300">
                       Klik salah satu pertanyaan di sekeliling
                       untuk melihat informasi kontak yang sesuai.
                     </p>
@@ -357,7 +356,7 @@ export default function SumberDayaPage() {
                       {resource.question}
                     </p>
                     <p className="mt-2 text-[10px] leading-4 text-slate-400 transition-colors group-hover:text-emerald-200">
-                      {resource.title} →
+                      {resource.title}
                     </p>
                   </div>
                 </div>
@@ -405,7 +404,7 @@ export default function SumberDayaPage() {
                         href={`tel:${activeResource.contact.replace(/[^\d+]/g, '')}`}
                         className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-300 px-4 py-3 text-sm font-bold text-[#08251f]"
                       >
-                        Hubungi Kontak ↗
+                        Hubungi Kontak
                       </a>
                     ) : (
                       <p className="mt-5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 text-xs text-slate-300">

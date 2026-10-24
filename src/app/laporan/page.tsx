@@ -3,9 +3,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-
 import Reveal from '@/components/Reveal';
 import { supabase } from '@/lib/supabase';
+import { ArrowRight, ArrowUpRight } from 'react-feather';
 
 type ReportStatus =
   | 'menunggu_verifikasi'
@@ -159,17 +159,6 @@ export default function LaporanHistoryPage() {
     return reports.slice(startIndex, startIndex + REPORTS_PER_PAGE);
   }, [reports, currentPage]);
 
-  function goToPage(page: number) {
-    if (page < 1 || page > totalPages) return;
-
-    setCurrentPage(page);
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
-  }
-
   function getPageNumbers() {
     const pages: (number | '...')[] = [];
 
@@ -215,11 +204,11 @@ const secondRow = reports.slice(midpoint);
                 Transparansi
               </p>
 
-              <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl">
+              <h1 className="mt-3 font-display text-2xl font-bold tracking-tight text-white sm:text-5xl">
                 Histori Laporan
               </h1>
 
-              <p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-500">
+              <p className="mt-3 max-w-xl text-base leading-normal text-zinc-500">
                 Pantau laporan kejadian yang masuk ke sistem GARDU,
                 lengkap dengan status dan informasi lokasinya.
               </p>
@@ -415,7 +404,7 @@ const secondRow = reports.slice(midpoint);
               className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-300 transition hover:text-emerald-200"
             >
               Jelajahi berita lainnya
-              <span aria-hidden="true">↗</span>
+              <span aria-hidden="true"><ArrowUpRight className="h-4 w-4" /></span>
             </a>
           </div>
         </Reveal>
@@ -453,7 +442,7 @@ const secondRow = reports.slice(midpoint);
                   </span>
 
                   <span className="absolute bottom-3 right-4 flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white transition group-hover:border-emerald-300 group-hover:bg-emerald-400 group-hover:text-emerald-950">
-                    ↗
+                    <ArrowUpRight className="h-5 w-5" />
                   </span>
                 </div>
 
@@ -481,7 +470,7 @@ const secondRow = reports.slice(midpoint);
                     </span>
 
                     <span className="text-xs font-semibold text-emerald-300 transition group-hover:translate-x-1">
-                      →
+                      <ArrowRight className="h-4 w-4" />
                     </span>
                   </div>
                 </div>
