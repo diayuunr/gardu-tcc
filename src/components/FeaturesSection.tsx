@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Reveal from './Reveal';
-import { ArrowRightCircle } from 'react-feather';
+import { ArrowRightCircle, ArrowUpLeft } from 'react-feather';
 
 const FEATURES = [
   {
@@ -448,7 +448,7 @@ export const FeaturesSection = () => {
               <div className="flex min-h-[310px] items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/[0.015]">
                 <div className="text-center">
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-300/15 bg-emerald-400/[0.05] text-2xl text-emerald-300">
-                    ↖
+                   <ArrowUpLeft size={24} />
                   </div>
                   <p className="mt-4 text-sm font-medium text-zinc-300">
                     Jelajahi fitur Gardu

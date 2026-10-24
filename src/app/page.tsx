@@ -4,30 +4,10 @@ import HeroCard from '@/components/HeroCard';
 import { createClient } from '@/lib/supabase/server';
 import CountUp from '@/components/CountUp';
 import { FeaturesSection } from '@/components/FeaturesSection';
+import AgentsSections from '@/components/AgentsSections';
+import HowItWorksSection from '@/components/StepsSection';
 
 export const dynamic = 'force-dynamic';
-
-
-const AGENTS = [
-  {
-    name: 'Report Analysis Agent',
-    role: 'Memahami & mengelompokkan laporan',
-    desc: 'Gemini membaca laporan bebas dari warga dan mengubahnya menjadi data terstruktur (lokasi, waktu, dan jenis kejadian), lalu mendeteksi laporan serupa dalam 24 jam terakhir.',
-    tag: 'Gemini API',
-  },
-  {
-    name: 'Risk Prediction Agent',
-    role: 'Skor kerawanan per area & periode waktu',
-    desc: 'Menghitung skor kerawanan 0-100 per area dan periode waktu dari kejadian terdokumentasi, lalu menyimpannya untuk peta dan cek rute.',
-    tag: 'Berbasis aturan',
-  },
-  {
-    name: 'Safe Route Advisor',
-    role: 'Cek risiko sebelum berangkat',
-    desc: 'Mencocokkan asal dan tujuan dengan skor kerawanan area pada periode keberangkatan, lalu memberi status aman, waspada, atau berisiko tinggi.',
-    tag: 'Berbasis aturan',
-  },
-];
 
 const STEPS = [
   {
@@ -245,106 +225,14 @@ export default async function LandingPage() {
       {/* FITUR */}
       <FeaturesSection />
 
-      {/* AI AGENTS */}
-      <section className="border-y border-line bg-panel/40 py-24">
-        <div className="container-x">
-          <Reveal>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">
-              Arsitektur Sistem
-            </p>
-
-            <h2 className="mt-3 max-w-2xl font-display text-3xl font-bold text-white sm:text-4xl">
-              Tiga Agent dengan peran terpisah.
-            </h2>
-
-            <p className="mt-4 max-w-2xl text-zinc-500">
-              Tiga modul agen dengan peran terpisah: Gemini digunakan untuk memahami laporan dan dua lainnya yang berbasis aturan untuk menghitung skor kerawanan dan memeriksa rute.
-            </p>
-          </Reveal>
-
-          <div className="mt-12 grid gap-5 lg:grid-cols-3">
-            {AGENTS.map((a, i) => (
-              <Reveal key={a.name} delay={i * 0.1}>
-                <div className="glass-card h-full p-6">
-                  <div className="flex items-center justify-between">
-                    <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-400/25">
-                      Agent {i + 1}
-                    </span>
-
-                    <span className="text-[11px] text-zinc-600">
-                      {a.tag}
-                    </span>
-                  </div>
-
-                  <h3 className="mt-5 font-display text-xl font-semibold text-white">
-                    {a.name}
-                  </h3>
-
-                  <p className="mt-1 text-sm font-medium text-emerald-400/80">
-                    {a.role}
-                  </p>
-
-                  <p className="mt-3 text-sm leading-snug text-zinc-500">
-                    {a.desc}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* AGENTS */}
+      <AgentsSections />
 
       {/* CARA KERJA */}
-      <section className="container-x py-24">
-        <Reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">
-            Alur Sistem
-          </p>
-
-          <h2 className="mt-3 font-display text-3xl font-bold text-white sm:text-4xl">
-            Dari laporan menjadi peringatan.
-          </h2>
-        </Reveal>
-
-        <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((s, i) => (
-            <Reveal key={s.n} delay={i * 0.09}>
-              <div className="relative h-full rounded-3xl border border-line bg-panel/50 p-6">
-                <span className="font-display text-4xl font-bold text-emerald-400/25">
-                  {s.n}
-                </span>
-
-                <h3 className="mt-3 font-display text-lg font-semibold text-white">
-                  {s.title}
-                </h3>
-
-                <p className="mt-2 text-sm leading-snug text-zinc-500">
-                  {s.desc}
-                </p>
-
-                {i < STEPS.length - 1 && (
-                  <svg
-                    className="absolute -right-4 top-1/2 hidden -translate-y-1/2 text-emerald-400/40 lg:block"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 12h14M13 6l6 6-6 6" />
-                  </svg>
-                )}
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
+      <HowItWorksSection />
 
       {/* ETIKA + CTA */}
-      <section className="container-x pb-24">
+      <section className="container-x pb-24 pt-15">
         <Reveal>
           <div className="glass-card relative overflow-hidden p-10 text-center sm:p-14">
             <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[520px] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
