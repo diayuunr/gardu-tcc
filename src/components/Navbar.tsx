@@ -77,33 +77,48 @@ export default function Navbar() {
     };
   }, []);
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+
+    const updateMobile = () => setIsMobile(mediaQuery.matches);
+
+    updateMobile();
+    mediaQuery.addEventListener('change', updateMobile);
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateMobile);
+    };
+  }, []);
+
   return (
-    <motion.header
-      initial={false}
-      animate={{
-        top: scrolled ? 14 : 0,
-        left: scrolled ? '50%' : 0,
-        x: scrolled ? '-50%' : '0%',
-        width: scrolled ? '75%' : '100%',
-        borderRadius: scrolled ? 999 : 0,
-      }}
-      transition={{
-        type: 'spring',
-        stiffness: 200,
-        damping: 40,
-        mass: 0.8,
-      }}
-      className={`
-        fixed z-50
-        border
-        transition-colors duration-500
-        ${
-          scrolled || open
-            ? 'border-line bg-ink/80 shadow-2xl shadow-black/20 backdrop-blur-xl'
-            : 'border-transparent bg-transparent'
-        }
-      `}
-    >
+<motion.header
+  initial={false}
+  animate={{
+    top: !isMobile && scrolled ? 14 : 0,
+    width: !isMobile && scrolled ? '75%' : '100%',
+    borderRadius: scrolled
+      ? isMobile
+        ? 20
+        : 999
+      : 0,
+  }}
+  transition={{
+    duration: 0.45,
+    ease: [0.22, 1, 0.36, 1],
+  }}
+  className={`
+    fixed z-50
+    left-0 right-0 mx-auto
+    border
+    transition-colors duration-500
+    ${
+      scrolled || open
+        ? 'border-line bg-ink/80 shadow-2xl shadow-black/20 backdrop-blur-xl'
+        : 'border-transparent bg-transparent'
+    }
+  `}
+>
       <nav
         className={`
           container-x flex items-center justify-between
@@ -165,7 +180,7 @@ export default function Navbar() {
         {/* MOBILE */}
         <button
           onClick={() => setOpen(!open)}
-          className="p-2 text-zinc-300 md:hidden"
+          className="p-2 text-zinc-300 md:hidden rounded-sm"
           aria-label="Menu"
         >
           <svg
@@ -229,7 +244,7 @@ export default function Navbar() {
                       href={l.href}
                       onClick={() => setOpen(false)}
                       className={`
-                        block rounded-xl px-4 py-3 text-sm
+                        block px-4 py-3 text-sm
                         ${
                           pathname === l.href
                             ? 'bg-emerald-400/10 text-emerald-300'

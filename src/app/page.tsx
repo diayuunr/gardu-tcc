@@ -8,31 +8,31 @@ export const dynamic = 'force-dynamic';
 const FEATURES = [
   {
     title: 'Pelaporan Anonim',
-    desc: 'Laporkan indikasi kerawanan kurang dari 1 menit. Tanpa akun, tanpa identitas.',
+    desc: 'Laporkan titik rawan dengan cepat tanpa perlu membuat akun atau membagikan identitas.',
     icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM4 21a8 8 0 0116 0',
     href: '/lapor',
   },
   {
-    title: 'Verifikasi & Klasterisasi AI',
-    desc: 'AI mengekstrak lokasi, waktu, jenis kejadian, lalu mengelompokkan laporan serupa via embedding pgvector.',
+    title: 'Ekstraksi & Klasterisasi AI',
+    desc: 'AI mengekstrak lokasi, waktu, jenis kejadian, lalu mengelompokkan laporan.',
     icon: 'M9 12l2 2 4-4M12 3l7 4v5c0 5-3.2 8.6-7 10-3.8-1.4-7-5-7-10V7l7-4z',
     href: '/lapor',
   },
   {
     title: 'Prediksi Zona Rawan',
-    desc: 'Skor kerawanan per area & jam dari seed data + laporan terverifikasi, termasuk pola musiman.',
+    desc: 'Kenali area dan waktu yang berpotensi rawan berdasarkan pola laporan yang terkumpul.',
     icon: 'M3 17l6-6 4 4 8-8M21 7v6h-6',
     href: '/peta',
   },
   {
     title: 'Cek Rute Aman',
-    desc: 'Asal, tujuan, jam berangkat, sistem memperingatkan zona berisiko beserta saran.',
+    desc: 'Masukkan titik awal dan tujuan untuk melihat area rawan di sepanjang perjalanan.',
     icon: 'M9 20l-5.45-2.72A1 1 0 014 16.38V5.62a1 1 0 011.45-.9L9 7m0 13l6-3m-6 3V7m6 10l4.55 2.28a1 1 0 001.45-.9V8.62a1 1 0 00-.55-.9L15 5m0 12V5m0 0L9 7',
     href: '/rute',
   },
   {
     title: 'Peta Heatmap Publik',
-    desc: 'Dasbor peta interaktif tanpa login, kesadaran situasional untuk seluruh warga.',
+    desc: 'Lihat sebaran titik rawan melalui peta interaktif yang dapat diakses siapa saja.',
     icon: 'M9 20l-5.45-2.72A1 1 0 014 16.38V5.62a1 1 0 011.45-.9L9 7m0 13l6-3m-6 3V7m6 10l4.55 2.28a1 1 0 001.45-.9V8.62a1 1 0 00-.55-.9L15 5m0 12V5m0 0L9 7',
     href: '/peta',
   },
@@ -46,22 +46,22 @@ const FEATURES = [
 
 const AGENTS = [
   {
-    name: 'Report Verification Agent',
-    role: 'Ekstraksi & klasterisasi laporan',
-    desc: 'Teks bebas menjadi data terstruktur + embedding vector(768), lalu mengelompokkan insiden serupa dengan cosine similarity untuk menyaring duplikat/hoaks.',
-    tag: 'LangChain + pgvector',
+    name: 'Report Analysis Agent',
+    role: 'Memahami & mengelompokkan laporan',
+    desc: 'Gemini membaca laporan bebas dari warga dan mengubahnya menjadi data terstruktur (lokasi, waktu, dan jenis kejadian), lalu mendeteksi laporan serupa dalam 24 jam terakhir.',
+    tag: 'Gemini API',
   },
   {
     name: 'Risk Prediction Agent',
-    role: 'Skor kerawanan per area & jam',
-    desc: 'Mengagregasi seed data dan laporan terverifikasi menjadi skor 0-100 per area/jam, dengan koreksi pola musiman seperti lonjakan menjelang Ramadan.',
-    tag: 'Seed data + komunitas',
+    role: 'Skor kerawanan per area & periode waktu',
+    desc: 'Menghitung skor kerawanan 0-100 per area dan periode waktu dari kejadian terdokumentasi, lalu menyimpannya untuk peta dan cek rute.',
+    tag: 'Berbasis aturan',
   },
   {
     name: 'Safe Route Advisor',
-    role: 'Peringatan dini perjalanan',
-    desc: 'Memeriksa rute terhadap peta skor kerawanan pada jam keberangkatan, lalu memberi status aman/waspada/rawan beserta area yang dihindari.',
-    tag: 'Sampling geodesi rute',
+    role: 'Cek risiko sebelum berangkat',
+    desc: 'Mencocokkan asal dan tujuan dengan skor kerawanan area pada periode keberangkatan, lalu memberi status aman, waspada, atau berisiko tinggi.',
+    tag: 'Berbasis aturan',
   },
 ];
 
@@ -171,7 +171,7 @@ export default async function LandingPage() {
 
             <Reveal delay={0.2}>
               <p className="mt-6 max-w-xl text-md leading-relaxed text-zinc-400">
-                Gardu membantu warga dan mahasiswa lebih waspada saat beraktivitas di Yogyakarta, mulai dari melaporkan kejadian secara anonim, mengenali area rawan, hingga memeriksa kondisi rute sebelum berangkat.
+                Gardu membantu warga dan mahasiswa lebih waspada saat beraktivitas di <br></br>D. I. Yogyakarta, mulai dari melaporkan kejadian secara anonim, mengenali area rawan, hingga memeriksa kondisi rute sebelum berangkat.
               </p>
             </Reveal>
 
@@ -258,13 +258,12 @@ export default async function LandingPage() {
               aria-hidden={dup === 1}
             >
               {[
-                'Pencegahan',
-                'Kesadaran Situasional',
-                'Tanpa Identitas',
-                'Data Terbuka',
+                'Tolak Kekerasan',
+                'Laporan Anonim',
                 'Rute Aman',
-                'Komunitas',
-                'Bukan Penghakiman',
+                'Cek Jalur',
+                'Kesadaran Sosial',
+                'Dari Warga Untuk Warga',
               ].map((t) => (
                 <span
                   key={t}
@@ -287,7 +286,7 @@ export default async function LandingPage() {
           </p>
 
           <h2 className="mt-3 max-w-2xl font-display text-3xl font-bold text-white sm:text-4xl">
-            Satu platform, dari lapor sampai selamat sampai tujuan.
+            Satu platform, <br></br> dari laporan menuju keselamatan.
           </h2>
         </Reveal>
 
@@ -317,7 +316,7 @@ export default async function LandingPage() {
                   {f.title}
                 </h3>
 
-                <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+                <p className="mt-2 text-sm leading-snug text-zinc-500">
                   {f.desc}
                 </p>
 
@@ -348,16 +347,15 @@ export default async function LandingPage() {
         <div className="container-x">
           <Reveal>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">
-              Arsitektur AI
+              Arsitektur Sistem
             </p>
 
             <h2 className="mt-3 max-w-2xl font-display text-3xl font-bold text-white sm:text-4xl">
-              Tiga AI Agent bekerja di balik layar.
+              Tiga Agent dengan peran terpisah.
             </h2>
 
             <p className="mt-4 max-w-2xl text-zinc-500">
-              Setiap agent punya peran spesifik dan diorkestrasi sebagai alur yang
-              dapat ditelusuri, bukan sekadar pemanggilan API tersebar.
+              Tiga modul agen dengan peran terpisah: Gemini digunakan untuk memahami laporan dan dua lainnya yang berbasis aturan untuk menghitung skor kerawanan dan memeriksa rute.
             </p>
           </Reveal>
 
@@ -383,7 +381,7 @@ export default async function LandingPage() {
                     {a.role}
                   </p>
 
-                  <p className="mt-3 text-sm leading-relaxed text-zinc-500">
+                  <p className="mt-3 text-sm leading-snug text-zinc-500">
                     {a.desc}
                   </p>
                 </div>
@@ -417,7 +415,7 @@ export default async function LandingPage() {
                   {s.title}
                 </h3>
 
-                <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+                <p className="mt-2 text-sm leading-snug text-zinc-500">
                   {s.desc}
                 </p>
 
