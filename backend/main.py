@@ -30,7 +30,9 @@ VALID_TIME_SLOTS = ("dini_hari", "pagi", "siang", "sore", "malam")
 #   CORS_ORIGINS=https://gardu-tcc.vercel.app,http://localhost:3000
 CORS_ORIGINS = [
     origin.strip()
-    for origin in os.environ.get("CORS_ORIGINS", "http://localhost:3000","https://gardu-tcc.vercel.app").split(",")
+    for origin in os.environ.get(
+        "CORS_ORIGINS", "http://localhost:3000,https://gardu-tcc.vercel.app"
+    ).split(",")
     if origin.strip()
 ]
 
