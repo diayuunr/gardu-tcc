@@ -24,13 +24,14 @@ KETERBATASAN VERSI INI (jujur, bukan pura-pura lengkap):
 
 import json
 import os
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from google import genai
 from google.genai import types
 
-from backend.db.queries import get_recent_reports
+from backend.db.queries import get_recent_reports, get_report_by_id
 
 MODEL = "gemini-3.6-flash"
 
@@ -148,15 +149,27 @@ def _extract_entities(text: str) -> dict:
     ) from last_error
 
 
+WIB = timezone(timedelta(hours=7))
+
+
 def _time_bucket_from_reported_at(reported_at: Optional[str]) -> Optional[str]:
-    """Heuristik: turunkan kategori waktu dari `reported_at` laporan lama,
-    karena tabel reports tidak punya kolom time_period tersendiri."""
+    """Heuristik: turunkan kategori waktu dari `reported_at` laporan,
+    karena tabel reports tidak punya kolom time_period tersendiri.
+    Jam dihitung dalam WIB (UTC+7): database mengembalikan waktu dalam UTC."""
     if not reported_at:
         return None
+    # Python 3.9 hanya menerima pecahan detik 3 atau 6 digit; samakan jadi 6 digit.
+    teks = re.sub(
+        r"\.(\d+)",
+        lambda m: "." + m.group(1).ljust(6, "0")[:6],
+        reported_at.replace("Z", "+00:00"),
+    )
     try:
-        dt = datetime.fromisoformat(reported_at.replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(teks)
     except ValueError:
         return None
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(WIB)
 
     hour = dt.hour
     if 0 <= hour < 5:
@@ -181,19 +194,33 @@ def _location_matches(a: str, b: str) -> bool:
 # TODO(REQ-F-011): Ini masih heuristik lokasi+waktu, BUKAN vector
 # similarity search yang sesungguhnya. Upgrade ke pgvector cosine
 # similarity kalau ada waktu tambahan setelah submission.
-def _cluster(report_id: str, location: str, time_category: str):
-    """Return (cluster_id, flagged) berdasarkan heuristik lokasi+waktu di
-    antara reports yang dibuat dalam DUPLICATE_WINDOW_HOURS jam terakhir."""
+def _cluster(
+    report_id: str,
+    location: str,
+    time_category: str,
+    kecamatan_kode: Optional[str] = None,
+):
+    """Return (cluster_id, flagged) di antara reports yang dibuat dalam
+    DUPLICATE_WINDOW_HOURS jam terakhir.
+
+    Dua laporan dianggap serupa kalau kategori jamnya sama DAN wilayahnya sama:
+    kecamatan_kode yang sama bila kedua laporan punya kode; kalau salah satunya
+    tidak punya, jatuh ke pencocokan teks lokasi seperti sebelumnya."""
     since = datetime.now(timezone.utc) - timedelta(hours=DUPLICATE_WINDOW_HOURS)
     recent_reports = get_recent_reports(since)
 
-    matches = [
-        row
-        for row in recent_reports
-        if row["id"] != report_id
-        and _location_matches(location, row.get("location") or "")
-        and _time_bucket_from_reported_at(row.get("reported_at")) == time_category
-    ]
+    matches = []
+    for row in recent_reports:
+        if row["id"] == report_id:
+            continue
+        if _time_bucket_from_reported_at(row.get("reported_at")) != time_category:
+            continue
+        if kecamatan_kode and row.get("kecamatan_kode"):
+            sama_wilayah = row["kecamatan_kode"] == kecamatan_kode
+        else:
+            sama_wilayah = _location_matches(location, row.get("location") or "")
+        if sama_wilayah:
+            matches.append(row)
 
     cluster_id = matches[0]["id"] if matches else None
     flagged = len(matches) > DUPLICATE_FLAG_THRESHOLD
@@ -201,14 +228,28 @@ def _cluster(report_id: str, location: str, time_category: str):
     return cluster_id, flagged
 
 
-def verify_report(report_id: str, text: str) -> dict:
+def verify_report(report_id: str, text: str, report: Optional[dict] = None) -> dict:
     """Sesuai docs/contracts.md — POST /agents/verify.
 
     Response: { "location", "time", "incident_type", "cluster_id", "flagged" }
+
+    `report` (baris dari tabel reports) boleh diberikan supaya tidak dibaca dua kali;
+    kalau kosong, dibaca di sini.
     """
     entities = _extract_entities(text)
 
-    cluster_id, flagged = _cluster(report_id, entities["location"], entities["time"])
+    if report is None:
+        report = get_report_by_id(report_id)
+    report = report or {}
+
+    kecamatan_kode = report.get("kecamatan_kode")
+    # Jam laporan ini diambil dari reported_at (cara yang sama dengan laporan lain);
+    # tebakan Gemini hanya cadangan kalau reported_at tidak ada.
+    time_category = _time_bucket_from_reported_at(report.get("reported_at")) or entities["time"]
+    # Laporan berkode: pencocokan lewat kode, teks lokasi tidak dipakai.
+    location = entities["location"] if not kecamatan_kode else (report.get("location") or "")
+
+    cluster_id, flagged = _cluster(report_id, location, time_category, kecamatan_kode)
 
     return {
         "location": entities["location"],
