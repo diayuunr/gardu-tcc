@@ -14,13 +14,18 @@ KETERBATASAN VERSI INI:
   cuma berarti belum ada data.
 """
 
-from datetime import datetime
+import re
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 
-from backend.db.queries import get_risk_scores_by_time_slot
+from backend.db.queries import get_risk_scores_by_time_slot, get_scoring_areas
 
-HIGH_RISK_THRESHOLD = 60
-MEDIUM_RISK_THRESHOLD = 30
+# Sama dengan legenda peta: Rawan 70+, Waspada 40-69, Aman di bawah 40.
+HIGH_RISK_THRESHOLD = 70
+MEDIUM_RISK_THRESHOLD = 40
 
+WIB = timezone(timedelta(hours=7))
+_RE_KODE = re.compile(r"^\d{2}\.\d{2}(\.\d{2}(\.\d{4})?)?$")
 
 class RouteAdvisorError(Exception):
     """Dilempar kalau input tidak bisa diproses (mis. departure_time bukan
@@ -37,6 +42,8 @@ def _time_slot_from_departure(departure_time: str) -> str:
             f"departure_time {departure_time!r} bukan format ISO 8601 yang valid"
         ) from exc
 
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(WIB)  # tanpa zona waktu dianggap sudah WIB
     hour = dt.hour
     if 0 <= hour < 5:
         return "dini_hari"
@@ -56,31 +63,67 @@ def _area_in_route(area: str, origin: str, destination: str) -> bool:
     return area_norm in (origin or "").lower() or area_norm in (destination or "").lower()
 
 
-def check_route(origin: str, destination: str, departure_time: str) -> dict:
+def check_route(
+    origin: str,
+    destination: str,
+    departure_time: str,
+    origin_kode: Optional[str] = None,
+    destination_kode: Optional[str] = None,
+) -> dict:
     """Sesuai docs/contracts.md — POST /agents/route-check.
 
     Response: { "risk_level": "aman" | "waspada" | "berisiko_tinggi",
                 "avoid_areas": [str] }
+
+    Kalau origin_kode / destination_kode diisi (kode dari tabel areas), skor tiap
+    ujung diambil dari wilayahnya (kelurahan -> kecamatannya) dan yang tertinggi
+    menentukan hasil. Kalau tidak diisi, dipakai pencocokan nama area di teks
+    origin/destination seperti sebelumnya.
     """
     time_slot = _time_slot_from_departure(departure_time)
     scores = get_risk_scores_by_time_slot(time_slot)
+    skor_per_area = {row["area"]: row["score"] for row in scores}
 
-    high_risk_areas = sorted({row["area"] for row in scores if row["score"] > HIGH_RISK_THRESHOLD})
-    medium_risk_areas = [
-        row["area"]
-        for row in scores
-        if MEDIUM_RISK_THRESHOLD <= row["score"] <= HIGH_RISK_THRESHOLD
-    ]
+    high_risk_areas = sorted(a for a, s in skor_per_area.items() if s >= HIGH_RISK_THRESHOLD)
 
-    matches_high = any(_area_in_route(area, origin, destination) for area in high_risk_areas)
-    matches_medium = any(_area_in_route(area, origin, destination) for area in medium_risk_areas)
+    if origin_kode or destination_kode:
+        wilayah = {w["kode"]: w for w in get_scoring_areas()}
+        skor_ujung = []
+        for kode in (origin_kode, destination_kode):
+            if not kode:
+                continue
+            if not _RE_KODE.match(kode):
+                raise RouteAdvisorError(f"kode wilayah {kode!r} tidak valid")
+            bagian = kode.split(".")
+            if len(bagian) == 4:  # kelurahan -> pakai kecamatannya
+                kode = ".".join(bagian[:3])
+            baris = wilayah.get(kode)
+            if baris is None:
+                raise RouteAdvisorError(
+                    f"kode wilayah {kode!r} tidak ada di daftar kab/kota/kecamatan"
+                )
+            skor_ujung.append(skor_per_area.get(baris["area"], 0))
 
-    if matches_high:
-        risk_level = "berisiko_tinggi"
-    elif matches_medium:
-        risk_level = "waspada"
+        tertinggi = max(skor_ujung)
+        if tertinggi >= HIGH_RISK_THRESHOLD:
+            risk_level = "berisiko_tinggi"
+        elif tertinggi >= MEDIUM_RISK_THRESHOLD:
+            risk_level = "waspada"
+        else:
+            risk_level = "aman"
     else:
-        risk_level = "aman"
+        medium_risk_areas = [
+            a for a, s in skor_per_area.items() if MEDIUM_RISK_THRESHOLD <= s < HIGH_RISK_THRESHOLD
+        ]
+        matches_high = any(_area_in_route(a, origin, destination) for a in high_risk_areas)
+        matches_medium = any(_area_in_route(a, origin, destination) for a in medium_risk_areas)
+
+        if matches_high:
+            risk_level = "berisiko_tinggi"
+        elif matches_medium:
+            risk_level = "waspada"
+        else:
+            risk_level = "aman"
 
     return {
         "risk_level": risk_level,

@@ -24,6 +24,10 @@ _REPORT_ALLOWED_FIELDS = {
     "reported_at",
     "status",
     "embedding",  # diisi Verification Agent, bukan endpoint publik
+    "kabkota_kode",
+    "kecamatan_kode",
+    "kelurahan_kode",
+    "jalan",
 }
 
 
@@ -65,7 +69,7 @@ def get_recent_reports(since: datetime) -> list:
     try:
         response = (
             supabase.table("reports")
-            .select("id, location, reported_at, status, created_at")
+            .select("id, location, reported_at, status, created_at, kabkota_kode, kecamatan_kode, kelurahan_kode")
             .gte("created_at", since.isoformat())
             .execute()
         )
@@ -116,6 +120,34 @@ def get_seed_data() -> list:
 
     return response.data
 
+def get_scoring_areas() -> list:
+    """Wilayah tingkat kab/kota dan kecamatan beserta label `area` yang dipakai
+    sebagai kunci di tabel risk_scores."""
+    try:
+        response = (
+            supabase.table("areas")
+            .select("kode, area, nama, tingkat, parent_kode")
+            .in_("tingkat", ["kabkota", "kecamatan"])
+            .execute()
+        )
+    except Exception as exc:
+        raise DBQueryError(f"Gagal ambil daftar wilayah dari tabel areas: {exc}") from exc
+
+    return response.data
+
+
+def get_area_names(codes: list) -> dict:
+    """Peta kode -> nama untuk daftar kode wilayah. Kode yang tidak ada di
+    tabel areas tidak ikut di hasil."""
+    codes = [c for c in codes if c]
+    if not codes:
+        return {}
+    try:
+        response = supabase.table("areas").select("kode, nama").in_("kode", codes).execute()
+    except Exception as exc:
+        raise DBQueryError(f"Gagal ambil nama wilayah untuk kode={codes!r}: {exc}") from exc
+
+    return {row["kode"]: row["nama"] for row in response.data}
 
 def get_risk_score(area: str, time_slot: str) -> Optional[dict]:
     """Ambil skor risiko untuk satu area + time_slot dari tabel risk_scores.
