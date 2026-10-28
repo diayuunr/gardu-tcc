@@ -1,7 +1,7 @@
 import type { RiskLevel } from '@/lib/types';
 
 export const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');
 
 // Level dari backend (rendah/sedang/tinggi) -> level yang dipakai UI.
 export type BackendRiskLevel = 'rendah' | 'sedang' | 'tinggi';

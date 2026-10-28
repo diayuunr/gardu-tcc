@@ -9,69 +9,6 @@ import HowItWorksSection from '@/components/StepsSection';
 
 export const dynamic = 'force-dynamic';
 
-<<<<<<< HEAD
-const FEATURES = [
-  {
-    title: 'Pelaporan Anonim',
-    desc: 'Laporkan indikasi kerawanan kurang dari 1 menit. Tanpa akun, tanpa identitas.',
-    icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM4 21a8 8 0 0116 0',
-    href: '/lapor',
-  },
-  {
-    title: 'Verifikasi & Klasterisasi AI',
-    desc: 'AI mengekstrak lokasi, waktu, jenis kejadian, lalu mengelompokkan laporan serupa via embedding pgvector.',
-    icon: 'M9 12l2 2 4-4M12 3l7 4v5c0 5-3.2 8.6-7 10-3.8-1.4-7-5-7-10V7l7-4z',
-    href: '/lapor',
-  },
-  {
-    title: 'Prediksi Zona Rawan',
-    desc: 'Skor kerawanan per area & jam dari seed data + laporan terverifikasi, termasuk pola musiman.',
-    icon: 'M3 17l6-6 4 4 8-8M21 7v6h-6',
-    href: '/peta',
-  },
-  {
-    title: 'Cek Rute Aman',
-    desc: 'Asal, tujuan, jam berangkat, sistem memperingatkan zona berisiko beserta saran.',
-    icon: 'M9 20l-5.45-2.72A1 1 0 014 16.38V5.62a1 1 0 011.45-.9L9 7m0 13l6-3m-6 3V7m6 10l4.55 2.28a1 1 0 001.45-.9V8.62a1 1 0 00-.55-.9L15 5m0 12V5m0 0L9 7',
-    href: '/rute',
-  },
-  {
-    title: 'Peta Heatmap Publik',
-    desc: 'Dasbor peta interaktif tanpa login, kesadaran situasional untuk seluruh warga.',
-    icon: 'M9 20l-5.45-2.72A1 1 0 014 16.38V5.62a1 1 0 011.45-.9L9 7m0 13l6-3m-6 3V7m6 10l4.55 2.28a1 1 0 001.45-.9V8.62a1 1 0 00-.55-.9L15 5m0 12V5m0 0L9 7',
-    href: '/peta',
-  },
-  {
-    title: 'Sumber Daya & Kontak',
-    desc: 'Akses cepat ke satgas, layanan pengaduan, dan program rehabilitasi remaja.',
-    icon: 'M3 5a2 2 0 012-2h3.3a1 1 0 01.9.7L10.6 7a1 1 0 01-.3 1.1L8.2 9.9a14 14 0 006.9 6.9l1.8-2.1a1 1 0 011.1-.3l3.3 1.3a1 1 0 01.7.9V19a2 2 0 01-2 2h-1C9.7 21 3 14.3 3 6V5z',
-    href: '/sumber-daya',
-  },
-];
-
-const AGENTS = [
-  {
-    name: 'Report Verification Agent',
-    role: 'Ekstraksi & klasterisasi laporan',
-    desc: 'Teks bebas menjadi data terstruktur + embedding vector(768), lalu mengelompokkan insiden serupa dengan cosine similarity untuk menyaring duplikat/hoaks.',
-    tag: 'LangChain + pgvector',
-  },
-  {
-    name: 'Risk Prediction Agent',
-    role: 'Skor kerawanan per area & jam',
-    desc: 'Mengagregasi seed data dan laporan terverifikasi menjadi skor 0-10 per area/jam, dengan koreksi pola musiman seperti lonjakan menjelang Ramadan.',
-    tag: 'Seed data + komunitas',
-  },
-  {
-    name: 'Safe Route Advisor',
-    role: 'Peringatan dini perjalanan',
-    desc: 'Memeriksa rute terhadap peta skor kerawanan pada jam keberangkatan, lalu memberi status aman/waspada/rawan beserta area yang dihindari.',
-    tag: 'Sampling geodesi rute',
-  },
-];
-
-=======
->>>>>>> origin/main
 const STEPS = [
   {
     n: '01',
@@ -210,11 +147,7 @@ export default async function LandingPage() {
                     l: 'Laporan total',
                   },
                   {
-<<<<<<< HEAD
-                    v: `${monitoredAreas}+`,
-=======
                     v: monitoredAreas ?? 0,
->>>>>>> origin/main
                     l: 'Area terpantau',
                   },
                   {

@@ -42,17 +42,9 @@ const STATUS_STYLE: Record<string, string> = {
     'border-amber-400/30 bg-amber-400/10 text-amber-300',
   terverifikasi:
     'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
-<<<<<<< HEAD
-
   ditandai_duplikat:
     'border-sky-400/30 bg-sky-400/10 text-sky-300',
-
   ditandai_hoaks:
-=======
-  duplikat:
-    'border-sky-400/30 bg-sky-400/10 text-sky-300',
-  hoaks:
->>>>>>> origin/main
     'border-red-400/30 bg-red-400/10 text-red-300',
 };
 
@@ -134,38 +126,19 @@ export default function LaporanHistoryPage() {
           throw new Error('Koneksi Supabase tidak tersedia.');
         }
 
-<<<<<<< HEAD
-        const { data, error: supabaseError } =
-          await supabase
-            .from('reports')
-            .select(
-              'id, description, location_text, latitude, longitude, occurred_at, status',
-            )
-            .order('occurred_at', {
-              ascending: false,
-            });
-=======
         const { data, error: supabaseError } = await supabase
           .from('reports')
           .select(
-            'id, description, location, lat, lng, reported_at, status',
+            'id, description, location_text, latitude, longitude, occurred_at, status',
           )
-          .order('reported_at', { ascending: false });
->>>>>>> origin/main
+          .order('occurred_at', { ascending: false });
 
         if (supabaseError) {
           console.error('SUPABASE REPORT ERROR:', supabaseError);
           throw supabaseError;
         }
 
-<<<<<<< HEAD
-        setReports(
-          (data as ReportHistory[]) ?? [],
-        );
-=======
-        console.log('HISTORI LAPORAN:', data);
         setReports((data as ReportHistory[]) ?? []);
->>>>>>> origin/main
       } catch (err) {
         console.error('Gagal mengambil histori laporan:', err);
         setError('Histori laporan belum dapat dimuat.');
@@ -300,258 +273,12 @@ const secondRow = reports.slice(midpoint);
         </div>
       )}
 
-<<<<<<< HEAD
-      {/* =====================================================
-          EMPTY
-      ====================================================== */}
-
-      {!loading &&
-        !error &&
-        reports.length === 0 && (
-          <Reveal delay={0.15}>
-            <div className="glass-card mt-6 p-10 text-center">
-              <p className="font-display text-lg font-semibold text-white">
-                Belum ada laporan
-              </p>
-
-              <p className="mt-2 text-sm text-zinc-500">
-                Belum ada laporan yang masuk
-                ke dalam sistem.
-              </p>
-            </div>
-          </Reveal>
-        )}
-
-      {/* =====================================================
-          REPORT LIST
-      ====================================================== */}
-
-      {!loading &&
-        !error &&
-        reports.length > 0 && (
-          <>
-            <div className="mt-6 space-y-4">
-              {currentReports.map(
-                (report, index) => {
-                  const globalIndex =
-                    (currentPage - 1) *
-                      REPORTS_PER_PAGE +
-                    index;
-
-                  const status =
-                    report.status ??
-                    'menunggu_verifikasi';
-
-                  return (
-                    <Reveal
-                      key={report.id}
-                      delay={Math.min(
-                        index * 0.03,
-                        0.3,
-                      )}
-                    >
-                      <motion.article
-                        layout
-                        whileHover={{
-                          y: -2,
-                        }}
-                        transition={{
-                          duration: 0.2,
-                        }}
-                        className="glass-card p-6"
-                      >
-                        <div className="flex flex-col gap-4">
-                          {/* HEADER */}
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold text-emerald-300">
-                                Laporan #
-                                {reports.length -
-                                  globalIndex}
-                              </span>
-
-                              <span
-                                className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${
-                                  STATUS_STYLE[
-                                    status
-                                  ] ??
-                                  'border-zinc-700 bg-zinc-800 text-zinc-400'
-                                }`}
-                              >
-                                {STATUS_LABEL[
-                                  status
-                                ] ??
-                                  status.replace(
-                                    /_/g,
-                                    ' ',
-                                  )}
-                              </span>
-                            </div>
-
-                            <span className="text-xs text-zinc-600">
-                              {formatDate(
-                                report.occurred_at,
-                              )}
-                            </span>
-                          </div>
-
-                          {/* DESCRIPTION */}
-                          <p className="max-w-3xl text-sm leading-relaxed text-zinc-200">
-                            {report.description}
-                          </p>
-
-                          {/* LOCATION */}
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
-                            <span className="inline-flex items-center gap-2">
-                              <span className="text-emerald-400">
-                                ●
-                              </span>
-
-                              <span>
-                                {report.location_text ||
-                                  'Lokasi tidak tersedia'}
-                              </span>
-                            </span>
-
-                            {report.latitude !==
-                              null &&
-                              report.longitude !==
-                                null && (
-                                <>
-                                  <span className="text-zinc-700">
-                                    •
-                                  </span>
-
-                                  <span>
-                                    {report.latitude.toFixed(
-                                      4,
-                                    )}
-                                    ,{' '}
-                                    {report.longitude.toFixed(
-                                      4,
-                                    )}
-                                  </span>
-                                </>
-                              )}
-                          </div>
-                        </div>
-                      </motion.article>
-                    </Reveal>
-                  );
-                },
-              )}
-            </div>
-
-            {/* =================================================
-                PAGINATION
-            ================================================== */}
-
-            {totalPages > 1 && (
-              <Reveal delay={0.15}>
-                <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-                  {/* PREVIOUS */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      goToPage(
-                        currentPage - 1,
-                      )
-                    }
-                    disabled={
-                      currentPage === 1
-                    }
-                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                      currentPage === 1
-                        ? 'cursor-not-allowed border-line text-zinc-700'
-                        : 'border-line text-zinc-400 hover:bg-zinc-900 hover:text-white'
-                    }`}
-                  >
-                    &lt;
-                  </button>
-
-                  {/* PAGE NUMBERS */}
-                  {getPageNumbers().map(
-                    (page, index) => {
-                      if (
-                        page === '...'
-                      ) {
-                        return (
-                          <span
-                            key={`ellipsis-${index}`}
-                            className="px-2 text-xs text-zinc-600"
-                          >
-                            ...
-                          </span>
-                        );
-                      }
-
-                      return (
-                        <button
-                          key={page}
-                          type="button"
-                          onClick={() =>
-                            goToPage(page)
-                          }
-                          className={`min-w-9 rounded-xl px-3 py-2 text-xs font-semibold transition ${
-                            currentPage ===
-                            page
-                              ? 'bg-emerald-400 text-emerald-950'
-                              : 'border border-line text-zinc-400 hover:bg-zinc-900 hover:text-white'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      );
-                    },
-                  )}
-
-                  {/* NEXT */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      goToPage(
-                        currentPage + 1,
-                      )
-                    }
-                    disabled={
-                      currentPage ===
-                      totalPages
-                    }
-                    className={`cursor-pointer rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                      currentPage ===
-                      totalPages
-                        ? 'cursor-not-allowed border-line text-zinc-700'
-                        : 'border-line text-zinc-400 hover:bg-zinc-900 hover:text-white'
-                    }`}
-                  >
-                    &gt;
-                  </button>
-                </div>
-              </Reveal>
-            )}
-
-            {/* PAGINATION INFO */}
-            <p className="mt-4 text-center text-[11px] text-zinc-600">
-              Menampilkan{' '}
-              {(currentPage - 1) *
-                REPORTS_PER_PAGE +
-                1}{' '}
-              –{' '}
-              {Math.min(
-                currentPage *
-                  REPORTS_PER_PAGE,
-                reports.length,
-              )}{' '}
-              dari {reports.length}{' '}
-              laporan
-=======
       {/* EMPTY */}
       {!loading && !error && reports.length === 0 && (
         <div className="container-x mt-8">
           <div className="rounded-2xl border border-line bg-ink/40 p-10 text-center">
             <p className="font-display text-lg font-semibold text-white">
               Belum ada laporan
->>>>>>> origin/main
             </p>
 
             <p className="mt-2 text-sm text-zinc-500">
@@ -810,18 +537,18 @@ function ReportCard({
           <span className="mt-[-0.5] text-emerald-400">●</span>
 
           <span className="min-w-0 break-words">
-            {report.location || 'Lokasi tidak tersedia'}
+            {report.location_text || 'Lokasi tidak tersedia'}
           </span>
         </div>
 
-        {report.lat !== null && report.lng !== null && (
+        {report.latitude !== null && report.longitude !== null && (
           <p className="mt-2 pl-4 text-[10px] tabular-nums text-zinc-600">
-            {report.lat.toFixed(4)}, {report.lng.toFixed(4)}
+            {report.latitude.toFixed(4)}, {report.longitude.toFixed(4)}
           </p>
         )}
 
         <p className="mt-3 text-[10px] leading-relaxed text-zinc-500">
-          {formatDate(report.reported_at)}
+          {formatDate(report.occurred_at)}
         </p>
       </div>
     </article>

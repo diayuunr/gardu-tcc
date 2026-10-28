@@ -20,7 +20,7 @@ const AGENTS = [
   {
     name: 'Risk Prediction Agent',
     role: 'Skor kerawanan per area & periode waktu',
-    desc: 'Menghitung skor kerawanan 0-100 per area dan periode waktu dari kejadian terdokumentasi, lalu menyimpannya untuk peta dan cek rute.',
+    desc: 'Menghitung skor kerawanan 0-10 per area dan periode waktu dari kejadian terdokumentasi, lalu menyimpannya untuk peta dan cek rute.',
     tag: 'Berbasis aturan',
     accent: '#67e8f9',
   },

@@ -4,12 +4,8 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import Reveal from '@/components/Reveal';
-<<<<<<< HEAD
-import { PLACES } from '@/lib/gazetteer';
-import { BACKEND_URL, readErrorDetail } from '@/lib/api';
-=======
 import { supabase } from '@/lib/supabase';
->>>>>>> origin/main
+import { BACKEND_URL, readErrorDetail } from '@/lib/api';
 
 const INCIDENT_TYPES = [
   'Pencurian dengan kekerasan',
@@ -145,20 +141,27 @@ export default function LaporPage() {
     setPhase('sending');
 
     try {
-<<<<<<< HEAD
+      // Backend baru menerima lokasi sebagai teks, jadi nama wilayah yang
+      // dipilih digabung dari yang paling spesifik ke yang paling umum.
+      const nameOf = (kode: string) =>
+        areas.find((area) => area.kode === kode)?.nama;
+
+      const locationText = [
+        jalan.trim(),
+        kelurahanKode ? nameOf(kelurahanKode) : undefined,
+        nameOf(kecamatanKode),
+        nameOf(kabkotaKode),
+      ]
+        .filter(Boolean)
+        .join(', ')
+        .slice(0, 200);
+
       // Verifikasi AI berjalan otomatis di background backend setelah
       // laporan tersimpan, jadi cukup satu panggilan ke POST /reports.
       // Backend belum punya field jenis kejadian, jadi dilampirkan di
       // awal deskripsi agar tetap terbaca oleh verifikator.
       const response = await fetch(`${BACKEND_URL}/reports`, {
         method: 'POST',
-=======
-      const backendUrl = (
-        process.env.NEXT_PUBLIC_BACKEND_URL ||
-        process.env.NEXT_PUBLIC_API_URL ||
-        'http://localhost:8000'
-      ).replace(/\/$/, '');
->>>>>>> origin/main
 
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +170,7 @@ export default function LaporPage() {
 
         body: JSON.stringify({
           description: `Jenis kejadian: ${incidentType}. ${description.trim()}`,
-          location_text: locationText.trim(),
+          location_text: locationText,
 
           // Instan absolut (UTC) dari waktu lokal yang dipilih. Tanpa
           // zona waktu, backend menganggapnya UTC dan menolak waktu
@@ -176,85 +179,7 @@ export default function LaporPage() {
         }),
       });
 
-<<<<<<< HEAD
       if (!response.ok) {
-=======
-          body: JSON.stringify({
-            description: description.trim(),
-            kabkota_kode: kabkotaKode,
-            kecamatan_kode: kecamatanKode,
-            kelurahan_kode: kelurahanKode || null,
-            jalan: jalan.trim() || null,
-
-            /*
-             * Jangan menggunakan toISOString()
-             * agar waktu lokal yang dipilih user
-             * tidak bergeser ke UTC.
-             *
-             * Contoh:
-             * 2026-09-20T00:00
-             *
-             * dikirim sebagai:
-             * 2026-09-20T00:00:00
-             */
-
-            reported_at:
-              `${occurredAt}:00`,
-          }),
-        }
-      );
-
-      /*
-       * Cek apakah pembuatan laporan berhasil
-       */
-
-      if (!reportResponse.ok) {
-        let detail =
-          'Gagal mengirim laporan.';
-
-        try {
-          const errorData =
-            await reportResponse.json();
-
-          if (errorData?.detail) {
-            detail =
-              errorData.detail;
-          }
-        } catch {
-          // Abaikan jika response bukan JSON
-        }
-
-        throw new Error(detail);
-      }
-
-      /*
-       * Response dari:
-       * POST /reports
-       *
-       * {
-       *   "id": "...",
-       *   "status": "menunggu_verifikasi"
-       * }
-       */
-
-      const reportData =
-        await reportResponse.json();
-
-      console.log(
-        '=== REPORT CREATED ==='
-      );
-
-      console.log(reportData);
-
-      const reportId =
-        reportData.id;
-
-      /*
-       * Pastikan ID laporan tersedia
-       */
-
-      if (!reportId) {
->>>>>>> origin/main
         throw new Error(
           await readErrorDetail(response, 'Gagal mengirim laporan.'),
         );

@@ -1,4 +1,5 @@
 export type RiskLevel = 'aman' | 'waspada' | 'rawan';
+export type ReportStatus = 'menunggu_verifikasi' | 'terverifikasi' | 'duplikat' | 'hoaks';
 
 export const LEVEL_STYLE: Record<
   RiskLevel,
@@ -17,6 +18,19 @@ export type RiskPoint = {
   score: number;
   level: RiskLevel;
 };
+
+// Dipakai halaman admin.
+export interface Report {
+  id: string;
+  description: string;
+  location_text: string;
+  occurred_at: string;
+  incident_type?: string | null;
+  status: ReportStatus;
+  ai_summary?: string | null;
+  flagged_reason?: string | null;
+  created_at?: string;
+}
 
 export interface FlaggedArea {
   area_name: string;
