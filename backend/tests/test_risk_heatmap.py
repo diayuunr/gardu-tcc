@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 
 import pytest
 from fastapi.testclient import TestClient
@@ -60,6 +61,13 @@ class _Query:
 @pytest.fixture(autouse=True)
 def clean_heatmap_cache(monkeypatch):
     monkeypatch.setattr(risk_api, "_heatmap_cache", {})
+
+
+@pytest.fixture(autouse=True)
+def pinned_today(monkeypatch):
+    """Pengali musim memakai tanggal hari ini; dipin ke hari non-Ramadan supaya test
+    tidak berubah hasil saat dijalankan di musim Ramadan."""
+    monkeypatch.setattr(risk_agent, "today_wib", lambda: date(2026, 9, 20))
 
 
 def _use(fake):

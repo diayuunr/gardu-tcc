@@ -10,12 +10,27 @@ from supabase import Client
 
 from app.agents.embedding_service import generate_embedding
 from app.agents.risk_agent import refresh_risk_scores_safely
-from app.core.config import get_settings
+from app.core.config import Settings, get_settings
 from app.core.db_retry import execute_with_retry
 from app.core.safe_log import safe_error_summary
 from app.core.supabase_client import get_supabase
+from app.core.timeutil import WIB, to_wib
 
 logger = logging.getLogger(__name__)
+
+STATUS_PENDING = "menunggu_verifikasi"
+STATUS_DUPLICATE = "ditandai_duplikat"
+STATUS_HOAX = "ditandai_hoaks"
+# Laporan berstatus ini TIDAK boleh dianggap bukti independen: tidak jadi kecocokan
+# klaster dan tidak pernah diberi incident_id.
+FLAGGED_STATUSES = frozenset({STATUS_DUPLICATE, STATUS_HOAX})
+
+# Kode alasan penandaan (disimpan di kolom `flagged_reason`). SENGAJA kode tetap,
+# bukan kutipan teks laporan: moderator melihat "kenapa", tanpa teks laporan masuk log/kolom lain.
+REASON_NO_LETTERS = "tanpa_huruf"
+REASON_REPEATED_CHARS = "karakter_berulang"
+REASON_REPEATED_WORD = "kata_berulang"
+REASON_SIMILAR_REPORT = "mirip_laporan_lain"
 
 # Verification Agent full pakai Gemini (embedding + klasifikasi), bukan
 # campuran provider — satu API key (GEMINI_API_KEY) cukup untuk seluruh
@@ -182,14 +197,58 @@ def extract_incident_type(description: str) -> str | None:
         return result.incident_type
 
 
+def assess_report_text(description: str, settings: Settings | None = None) -> str | None:
+    """Heuristik penanda laporan tidak wajar (REQ-F-012) — kode alasan, atau None kalau wajar.
+
+    DETERMINISTIK dan KONSERVATIF: hanya menangkap teks yang jelas sampah, dengan
+    syarat yang mustahil dipenuhi kalimat laporan sungguhan. Tidak memakai LLM
+    (hasil harus reprodusibel) dan tidak menilai isi/kebenaran cerita. Aturan
+    (setelah teks diubah ke huruf kecil dan hanya huruf/angka yang dihitung):
+
+    - `tanpa_huruf`       : tidak ada satu huruf pun (mis. "1234567890", "!!!!!!!!!!").
+    - `karakter_berulang` : < `verification_hoax_min_distinct_chars` (default 4) huruf/angka
+                            BERBEDA (mis. "aaaaaaaaaa", "hahahahaha", "asdasdasdasd").
+    - `kata_berulang`     : satu kata yang sama diulang >= `verification_hoax_repeat_min_words`
+                            (default 4) kali tanpa kata lain (mis. "tolong tolong tolong tolong").
+
+    Sengaja TIDAK dipakai: koordinat di luar wilayah. Geocoding sudah dibatasi ke DIY,
+    sedangkan koordinat manual di luar DIY jarang dan menandainya sebagai hoaks berisiko
+    menyalahtandai laporan sah dari luar kota. Laporan yang lolos tetap dinilai moderator.
+    Kegagalan di sini bukan hukuman final: status `ditandai_hoaks` bisa ditinjau moderator.
+    """
+    settings = settings or get_settings()
+    normalized = [char for char in description.casefold() if char.isalnum()]
+    if not any(char.isalpha() for char in normalized):
+        return REASON_NO_LETTERS
+    if len(set(normalized)) < settings.verification_hoax_min_distinct_chars:
+        return REASON_REPEATED_CHARS
+
+    words = [word for word in re.split(r"[^\w]+", description.casefold()) if word]
+    if len(words) >= settings.verification_hoax_repeat_min_words and len(set(words)) == 1:
+        return REASON_REPEATED_WORD
+    return None
+
+
 def _fetch_report(supabase: Client, report_id: str) -> dict | None:
     response = execute_with_retry(
         supabase.table("reports")
-        .select("id,description,location_text,latitude,longitude,occurred_at,incident_id,status")
+        .select(
+            "id,description,location_text,latitude,longitude,occurred_at,incident_id,status,extracted_incident_type"
+        )
         .eq("id", report_id)
         .limit(1)
     )
     return response.data[0] if response.data else None
+
+
+def _flag_report(supabase: Client, report_id: str, status: str, reason: str) -> None:
+    """Tandai laporan. Status ditulis DULU (penting); alasan terpisah dan best-effort
+    supaya kolom `flagged_reason` yang belum dimigrasi tidak menggagalkan penandaan."""
+    execute_with_retry(supabase.table("reports").update({"status": status}).eq("id", report_id))
+    try:
+        execute_with_retry(supabase.table("reports").update({"flagged_reason": reason}).eq("id", report_id))
+    except Exception as exc:  # noqa: BLE001 - alasan hanya pelengkap bagi moderator
+        logger.warning("Alasan penandaan tidak tersimpan (kolom flagged_reason sudah dimigrasi?): %s", safe_error_summary(exc))
 
 
 def _find_similar_reports(
@@ -225,17 +284,119 @@ def _find_similar_reports(
     return response.data or []
 
 
-def _create_incident(supabase: Client, report: dict, incident_type: str | None) -> str:
+def _fetch_match_details(supabase: Client, match_ids: list[str]) -> dict[str, dict]:
+    """Status & koordinat laporan-laporan yang cocok (RPC hanya mengembalikan id/incident/similarity)."""
+    if not match_ids:
+        return {}
+    response = execute_with_retry(
+        supabase.table("reports").select("id,status,latitude,longitude").in_("id", match_ids)
+    )
+    return {row["id"]: row for row in response.data or []}
+
+
+def _drop_flagged_matches(supabase: Client, matches: list[dict]) -> tuple[list[dict], dict[str, dict]]:
+    """Buang kecocokan berstatus duplikat/hoaks (pertahanan KEDUA setelah filter di
+    fungsi SQL `match_similar_reports`, yang mungkin belum dimigrasi).
+
+    Return (kecocokan yang sah, detail {id: baris} semua kecocokan). Kecocokan yang
+    statusnya tidak diketahui (baris tak ditemukan) dipertahankan — hanya yang
+    TERBUKTI ditandai yang dibuang.
+    """
+    details = _fetch_match_details(supabase, [m["id"] for m in matches])
+
+    def is_flagged(match: dict) -> bool:
+        status = match.get("status") or details.get(match["id"], {}).get("status")
+        return status in FLAGGED_STATUSES
+
+    return [m for m in matches if not is_flagged(m)], details
+
+
+def _coordinates_of(row: dict | None) -> tuple[float, float] | None:
+    if row is None or row.get("latitude") is None or row.get("longitude") is None:
+        return None
+    return float(row["latitude"]), float(row["longitude"])
+
+
+def _first_coordinates(sources: list[dict | None]) -> tuple[float, float] | None:
+    """Koordinat pertama yang lengkap; urutan `sources` = prioritas (pembuat insiden dulu)."""
+    return next((c for c in (_coordinates_of(row) for row in sources) if c is not None), None)
+
+
+def _create_incident(
+    supabase: Client, report: dict, incident_type: str | None, coordinate_sources: list[dict | None] | None = None
+) -> str:
+    """Buat insiden dari `report`. Koordinat: laporan pembuat dulu, lalu laporan lain di
+    klaster (`coordinate_sources`) yang punya koordinat — insiden tanpa koordinat tidak
+    ikut skor kerawanan, jadi sebisa mungkin jangan dibiarkan kosong."""
+    coordinates = _first_coordinates([report, *(coordinate_sources or [])])
     record = {
         "location_text": report["location_text"],
-        "latitude": report.get("latitude"),
-        "longitude": report.get("longitude"),
+        "latitude": coordinates[0] if coordinates else None,
+        "longitude": coordinates[1] if coordinates else None,
         "incident_time": report["occurred_at"],
         "incident_type": incident_type,
         "is_seed_data": False,
     }
     response = execute_with_retry(supabase.table("incidents").insert(record))
     return response.data[0]["id"]
+
+
+def _fill_incident_coordinates(
+    supabase: Client, incident_id: str, coordinate_sources: list[dict | None]
+) -> bool:
+    """Isi koordinat insiden yang masih kosong dari laporan anggota klaster.
+    Tidak pernah menimpa koordinat yang sudah ada. Return True kalau diperbarui."""
+    response = execute_with_retry(
+        supabase.table("incidents").select("id,latitude,longitude").eq("id", incident_id).limit(1)
+    )
+    if not response.data or _coordinates_of(response.data[0]) is not None:
+        return False
+    coordinates = _first_coordinates(coordinate_sources)
+    if coordinates is None:
+        return False
+    execute_with_retry(
+        supabase.table("incidents")
+        .update({"latitude": coordinates[0], "longitude": coordinates[1]})
+        .eq("id", incident_id)
+    )
+    return True
+
+
+def _parse_created_at(raw: object) -> datetime:
+    try:
+        return to_wib(datetime.fromisoformat(str(raw)))
+    except ValueError:
+        return datetime.max.replace(tzinfo=WIB)  # tak terbaca = dianggap paling baru
+
+
+def _merge_into_oldest_incident(supabase: Client, incident_ids: list[str]) -> str | None:
+    """Gabungkan semua insiden komunitas yang dirujuk kecocokan ke insiden TERTUA.
+
+    Kenapa tertua: ia titik awal klaster dan paling mungkin sudah terverifikasi/dirujuk
+    sistem lain; yang lebih baru adalah pecahan yang ternyata satu kejadian. Laporan
+    anggota dipindahkan lalu insiden kosongnya dihapus — kalau dibiarkan, insiden
+    terverifikasi tanpa laporan akan terus dihitung di skor kerawanan (hitungan ganda).
+    Insiden seed data TIDAK pernah digabung/dihapus. Return id insiden tujuan, atau
+    None kalau tidak ada satu pun yang ditemukan (id usang)."""
+    unique_ids = list(dict.fromkeys(incident_ids))
+    response = execute_with_retry(
+        supabase.table("incidents").select("id,created_at,is_seed_data").in_("id", unique_ids)
+    )
+    candidates = [row for row in response.data or [] if not row.get("is_seed_data")]
+    if not candidates:
+        return None
+
+    target_row = min(candidates, key=lambda row: (_parse_created_at(row.get("created_at")), str(row["id"])))
+    target_id = target_row["id"]
+    for row in candidates:
+        if row["id"] == target_id:
+            continue
+        execute_with_retry(
+            supabase.table("reports").update({"incident_id": target_id}).eq("incident_id", row["id"])
+        )
+        execute_with_retry(supabase.table("incidents").delete().eq("id", row["id"]))
+        logger.info("Insiden %s digabung ke insiden tertua %s", row["id"], target_id)
+    return target_id
 
 
 def _count_incident_reports(supabase: Client, incident_id: str) -> int:
@@ -285,24 +446,23 @@ def process_report_verification(report_id: str) -> None:
     """Entry point Report Verification & Clustering Agent (REQ-F-010..014).
 
     Dipanggil sebagai FastAPI BackgroundTask setelah POST /reports berhasil
-    (lihat app/api/reports.py) — TIDAK memblokir respons submit laporan,
-    sesuai REQ-NF-100 (konfirmasi cepat, di luar waktu proses AI) dan
-    REQ-NF-102 (proses AI di latar belakang).
+    (lihat app/api/reports.py) dan oleh skrip reprocessing — TIDAK memblokir respons
+    submit laporan, sesuai REQ-NF-100 (konfirmasi cepat, di luar waktu proses AI)
+    dan REQ-NF-102 (proses AI di latar belakang).
 
-    Alur: ekstrak jenis kejadian (LLM) -> buat embedding -> cari laporan
-    mirip dalam rentang waktu/lokasi berdekatan (pgvector) -> gabung jadi
-    klaster / tandai duplikat / promosikan status terverifikasi.
+    Alur: periksa kewajaran teks (heuristik, tanpa AI) -> ekstrak jenis kejadian (LLM)
+    -> buat embedding -> cari laporan mirip dalam rentang waktu/lokasi berdekatan
+    (pgvector) -> gabung jadi klaster / tandai duplikat / promosikan terverifikasi.
+
+    IDEMPOTEN (aman dijalankan ulang untuk laporan yang sama): laporan yang statusnya
+    sudah bukan `menunggu_verifikasi` dilewati; laporan yang sudah punya `incident_id`
+    hanya dilengkapi jenis kejadiannya, TIDAK diklasterkan lagi (tidak membuat
+    insiden ganda); jenis kejadian yang sudah ada tidak diminta ulang ke Gemini.
 
     SELURUH fungsi dibungkus try/except paling luar: kegagalan apa pun di
     sini TIDAK BOLEH menghapus/merusak laporan mentah yang sudah tersimpan
     (REQ-NF-110). Laporan yang gagal diproses cukup tetap berstatus
-    'menunggu_verifikasi' menunggu proses ulang.
-
-    KNOWN LIMITATION: belum ada proses ulang (reprocessing) otomatis. Laporan
-    yang verifikasinya gagal di tengah jalan (mis. koneksi Supabase putus 2x
-    berturut-turut, atau kuota AI habis melewati batas retry) tetap tersimpan
-    aman tapi "yatim" — tanpa incident_id dan/atau extracted_incident_type —
-    sampai ada job reprocessing (di luar cakupan saat ini).
+    'menunggu_verifikasi' menunggu proses ulang (`python -m app.scripts.reprocess_reports`).
     """
     try:
         supabase = get_supabase()
@@ -310,12 +470,35 @@ def process_report_verification(report_id: str) -> None:
         if report is None:
             logger.warning("Laporan tidak ditemukan, verifikasi dibatalkan: %s", report_id)
             return
+        if report.get("status") != STATUS_PENDING:
+            logger.info("Laporan %s berstatus %s, verifikasi dilewati", report_id, report.get("status"))
+            return
 
-        incident_type = extract_incident_type(report["description"])
+        settings = get_settings()
+        reason = assess_report_text(report["description"], settings)
+        if reason is not None:
+            # REQ-F-012: teks jelas tidak wajar -> tandai untuk moderator, jangan buang
+            # token AI/embedding dan jangan jadikan insiden. Log hanya kode alasan.
+            _flag_report(supabase, report_id, STATUS_HOAX, reason)
+            logger.info("Laporan %s ditandai hoaks (alasan=%s)", report_id, reason)
+            return
+
+        incident_type = report.get("extracted_incident_type") or extract_incident_type(report["description"])
+        type_is_new = incident_type is not None and not report.get("extracted_incident_type")
+
+        if report.get("incident_id"):
+            # Sudah diklasterkan sebelumnya (proses ulang): cukup lengkapi jenis kejadian.
+            if type_is_new:
+                execute_with_retry(
+                    supabase.table("reports").update({"extracted_incident_type": incident_type}).eq("id", report_id)
+                )
+            logger.info("Laporan %s sudah diklasterkan, klasterisasi dilewati", report_id)
+            return
+
         embedding = generate_embedding(report["description"])
 
         update_fields: dict = {}
-        if incident_type is not None:
+        if type_is_new:
             update_fields["extracted_incident_type"] = incident_type
         if embedding is not None:
             update_fields["embedding"] = embedding
@@ -326,8 +509,8 @@ def process_report_verification(report_id: str) -> None:
             logger.info("Embedding gagal dibuat, clustering dilewati untuk laporan %s", report_id)
             return
 
-        occurred_at = datetime.fromisoformat(report["occurred_at"])
-        matches = _find_similar_reports(
+        occurred_at = to_wib(datetime.fromisoformat(report["occurred_at"]))
+        raw_matches = _find_similar_reports(
             supabase,
             embedding=embedding,
             exclude_report_id=report_id,
@@ -335,8 +518,8 @@ def process_report_verification(report_id: str) -> None:
             latitude=report.get("latitude"),
             longitude=report.get("longitude"),
         )
+        matches, details = _drop_flagged_matches(supabase, raw_matches)
 
-        settings = get_settings()
         duplicate_match = next(
             (m for m in matches if m["similarity"] >= settings.verification_duplicate_threshold),
             None,
@@ -345,9 +528,7 @@ def process_report_verification(report_id: str) -> None:
             # REQ-F-012: teks nyaris identik dalam rentang waktu/lokasi
             # berdekatan -> kemungkinan duplikat, tandai untuk ditinjau
             # moderator, JANGAN otomatis dianggap bukti independen.
-            execute_with_retry(
-                supabase.table("reports").update({"status": "ditandai_duplikat"}).eq("id", report_id)
-            )
+            _flag_report(supabase, report_id, STATUS_DUPLICATE, REASON_SIMILAR_REPORT)
             logger.info(
                 "Laporan %s ditandai duplikat (mirip %s, similarity=%.3f)",
                 report_id,
@@ -365,22 +546,23 @@ def process_report_verification(report_id: str) -> None:
             logger.info("Laporan %s jadi insiden baru (belum ada korroborasi): %s", report_id, incident_id)
             return
 
-        existing_incident_id = next((m["incident_id"] for m in matches if m["incident_id"]), None)
-        if existing_incident_id is None:
-            existing_incident_id = _create_incident(supabase, report, incident_type)
-            for match in matches:
-                if not match["incident_id"]:
-                    execute_with_retry(
-                        supabase.table("reports")
-                        .update({"incident_id": existing_incident_id})
-                        .eq("id", match["id"])
-                    )
+        # Sumber koordinat klaster: laporan ini dulu, lalu laporan-laporan yang cocok.
+        coordinate_sources = [report, *(details.get(m["id"]) for m in matches)]
+        linked_ids = [m["incident_id"] for m in matches if m["incident_id"]]
+        incident_id = _merge_into_oldest_incident(supabase, linked_ids) if linked_ids else None
+        if incident_id is None:
+            incident_id = _create_incident(supabase, report, incident_type, coordinate_sources)
+        else:
+            _fill_incident_coordinates(supabase, incident_id, coordinate_sources)
 
-        execute_with_retry(
-            supabase.table("reports").update({"incident_id": existing_incident_id}).eq("id", report_id)
-        )
+        for match in matches:
+            if match["incident_id"] != incident_id:
+                execute_with_retry(
+                    supabase.table("reports").update({"incident_id": incident_id}).eq("id", match["id"])
+                )
+        execute_with_retry(supabase.table("reports").update({"incident_id": incident_id}).eq("id", report_id))
 
-        if _promote_incident_if_verified(supabase, existing_incident_id):
+        if _promote_incident_if_verified(supabase, incident_id):
             # Diagram sekuens SRS (fig4) langkah 5-6: insiden terverifikasi ->
             # Risk Prediction Agent memperbarui skor risiko (REQ-F-022).
             # Tidak pernah melempar exception, jadi tidak bisa mengganggu verifikasi.

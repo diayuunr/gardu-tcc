@@ -1,7 +1,7 @@
 """Lapisan narasi Risk Prediction Agent: Gemini MENJELASKAN skor, tidak menghitungnya.
 
 Angka skor & tingkat tetap 100% berasal dari rumus deterministik di
-`risk_agent.py`. Modul ini hanya mengubah angka yang sudah jadi (plus konteks
+`risk_agent.py` (skor dasar tersimpan x pengali musim saat dibaca). Modul ini hanya mengubah angka yang sudah jadi (plus konteks
 yang dipakai rumus: jam rawan, musim Ramadan, jumlah insiden) menjadi 1-2
 kalimat Bahasa Indonesia untuk warga.
 
@@ -30,9 +30,6 @@ from app.agents.risk_agent import (
     SELAMA_RAMADAN,
     TIME_BUCKET_HOURS,
     RiskLookup,
-    ramadan_phase,
-    seasonal_multiplier,
-    to_wib,
 )
 from app.core.config import Settings, get_settings
 from app.core.safe_log import safe_error_summary
@@ -64,47 +61,32 @@ _HUMAN_TEMPLATE = "Fakta skor:\n{facts}\n\nTulis penjelasannya."
 class NarrativeFacts:
     """Seluruh masukan narasi. Frozen/hashable: sekaligus jadi kunci cache."""
 
-    risk_score: float
+    risk_score: float  # skor AKHIR (sudah dikali pengali musim)
     risk_level: str
     time_bucket: str
     incident_count: int
-    season_known: bool  # False = waktu hitung skor tidak diketahui -> musim tidak disinggung
     season: str | None  # JELANG_RAMADAN / SELAMA_RAMADAN / None (di luar musim)
-    season_multiplier: float  # pengali yang BENAR-BENAR tertanam di skor
+    season_multiplier: float  # pengali yang BENAR-BENAR diterapkan pada skor yang ditampilkan
 
 
 # ---------------------------------------------------------------- fungsi murni
 
 
 def build_narrative_facts(lookup: RiskLookup, settings: Settings) -> NarrativeFacts:
-    """Susun fakta dari skor tersimpan. Musim dinilai pada WAKTU HITUNG skor
-    (`last_calculated_at`), bukan waktu bertanya, karena itulah musim yang
-    tertanam di angkanya; memakai logika yang sama dengan rumus (risk_agent)."""
-    if lookup.last_calculated_at is None:
-        return NarrativeFacts(
-            risk_score=lookup.risk_score,
-            risk_level=lookup.risk_level,
-            time_bucket=lookup.time_bucket,
-            incident_count=lookup.contributing_incident_count,
-            season_known=False,
-            season=None,
-            season_multiplier=1.0,
-        )
-    calculated_on = to_wib(lookup.last_calculated_at).date()
+    """Susun fakta dari skor yang dibaca. Musim & pengali diambil dari `lookup`: itulah
+    yang dipakai `apply_seasonality` pada TANGGAL PERTANYAAN saat skor dibaca, jadi narasi
+    tidak pernah menyebut musim yang berbeda dari yang benar-benar membentuk angkanya."""
     return NarrativeFacts(
         risk_score=lookup.risk_score,
         risk_level=lookup.risk_level,
         time_bucket=lookup.time_bucket,
         incident_count=lookup.contributing_incident_count,
-        season_known=True,
-        season=ramadan_phase(calculated_on, settings),
-        season_multiplier=seasonal_multiplier(calculated_on, lookup.time_bucket, settings),
+        season=lookup.season,
+        season_multiplier=lookup.season_multiplier,
     )
 
 
 def _describe_season(facts: NarrativeFacts) -> str:
-    if not facts.season_known:
-        return "tidak diketahui (jangan menyinggung musim)"
     if facts.season == JELANG_RAMADAN:
         return f"menjelang Ramadan; skor sudah dikali {facts.season_multiplier:.2f} karena pola historis kenaikan kasus"
     if facts.season == SELAMA_RAMADAN:
@@ -118,6 +100,15 @@ def _describe_season(facts: NarrativeFacts) -> str:
     return "tidak ada pengaruh musim pada skor ini (jangan menyinggung musim atau Ramadan)"
 
 
+def _describe_incident_count(count: int) -> str:
+    if count == 0:
+        return (
+            "- Tidak ada insiden tercatat langsung di area ini pada rentang jam ini; skor berasal dari "
+            "pengaruh insiden di area-area sekitarnya"
+        )
+    return f"- Jumlah insiden tercatat (data awal + laporan warga terverifikasi) di area dan rentang jam ini: {count}"
+
+
 def render_facts(facts: NarrativeFacts) -> str:
     """Fakta sebagai daftar teks untuk prompt."""
     start_hour, end_hour = next((s, e) for bucket, s, e in TIME_BUCKET_HOURS if bucket == facts.time_bucket)
@@ -125,8 +116,8 @@ def render_facts(facts: NarrativeFacts) -> str:
         [
             f"- Skor kerawanan: {facts.risk_score:.2f} dari 10 (tingkat: {facts.risk_level})",
             f"- Rentang waktu: {facts.time_bucket.replace('_', ' ')} ({start_hour:02d}.00-{end_hour:02d}.00 WIB)",
-            f"- Jumlah insiden tercatat (data awal + laporan warga terverifikasi) di area dan rentang jam ini: {facts.incident_count}",
-            f"- Musim saat skor dihitung: {_describe_season(facts)}",
+            _describe_incident_count(facts.incident_count),
+            f"- Musim pada tanggal skor ini ditanyakan: {_describe_season(facts)}",
         ]
     )
 

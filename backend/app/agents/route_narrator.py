@@ -25,7 +25,7 @@ from dataclasses import dataclass
 
 from app.agents import gemini_narration
 from app.agents.gemini_narration import clean_narrative
-from app.agents.risk_agent import TIME_BUCKET_HOURS
+from app.agents.risk_agent import JELANG_RAMADAN, SELAMA_RAMADAN, TIME_BUCKET_HOURS
 from app.core.config import get_settings
 from app.core.safe_log import safe_error_summary
 
@@ -46,6 +46,8 @@ _SYSTEM_PROMPT = (
     "- Bila ada area yang disarankan dihindari, sebut nama areanya persis seperti diberikan. "
     "Boleh menyarankan mempertimbangkan waktu berangkat lain atau tetap waspada, tanpa "
     "menyebut jalan/jalur alternatif tertentu.\n"
+    "- Sebut pengaruh musim (Ramadan) hanya bila ada di fakta; bila disebut, jelaskan bahwa skor area "
+    "sudah disesuaikan dengan musim tersebut.\n"
     "- Bila cakupan data rendah (skor hanya tersedia untuk sebagian area yang dilintasi), "
     "sampaikan bahwa hasil terbatas pada data yang tersedia.\n"
     "- Jangan menyebut identitas atau ciri kelompok orang mana pun, jangan menjanjikan "
@@ -68,6 +70,15 @@ class RouteNarrativeFacts:
     duration_minutes: int
     areas_checked: int
     areas_with_data: int
+    season: str | None = None  # JELANG_RAMADAN / SELAMA_RAMADAN / None pada tanggal berangkat
+
+
+def _describe_season(season: str | None) -> str:
+    if season == JELANG_RAMADAN:
+        return "menjelang Ramadan; skor kerawanan area sudah dikali pengali musim"
+    if season == SELAMA_RAMADAN:
+        return "selama Ramadan; skor kerawanan area sudah dikali pengali musim"
+    return "tidak ada pengaruh musim (jangan menyinggung musim atau Ramadan)"
 
 
 def _describe_time_bucket(bucket: str) -> str:
@@ -88,6 +99,7 @@ def render_route_facts(facts: RouteNarrativeFacts) -> str:
             f"- Area yang perlu diwaspadai (berisiko sedang): {watch}",
             f"- Jarak dan perkiraan durasi: {facts.distance_km:.1f} km, sekitar {facts.duration_minutes} menit",
             f"- Cakupan data: skor tersedia untuk {facts.areas_with_data} dari {facts.areas_checked} area yang dilintasi",
+            f"- Musim pada tanggal berangkat: {_describe_season(facts.season)}",
         ]
     )
 

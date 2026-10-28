@@ -3,6 +3,8 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.core.timeutil import to_wib
+
 
 class ReportStatus(str, Enum):
     """Status laporan (REQ-F-005). Tidak ada status yang menyingkap identitas pelapor."""
@@ -32,12 +34,15 @@ class ReportCreate(BaseModel):
 
     @field_validator("occurred_at")
     @classmethod
-    def waktu_tidak_boleh_jauh_di_masa_depan(cls, value: datetime) -> datetime:
-        now = datetime.now(timezone.utc)
-        compare = value if value.tzinfo else value.replace(tzinfo=timezone.utc)
-        if compare > now + timedelta(minutes=5):
+    def normalisasi_zona_waktu_dan_tolak_masa_depan(cls, value: datetime) -> datetime:
+        """Waktu tanpa zona = waktu lokal pengguna (WIB), sama seperti `to_wib` di
+        Risk Prediction Agent & Safe Route Advisor — supaya jam 02:00 tetap bucket
+        `dini_hari` dan tidak bergeser 7 jam. Hasilnya selalu timezone-aware, dan
+        pengecekan "bukan masa depan" memakai nilai yang SUDAH dinormalisasi itu."""
+        normalized = to_wib(value)
+        if normalized > datetime.now(timezone.utc) + timedelta(minutes=5):
             raise ValueError("Waktu kejadian tidak boleh di masa depan")
-        return value
+        return normalized
 
 
 class ReportOut(BaseModel):

@@ -160,17 +160,23 @@ def test_seed_incident_scores_its_area_and_hour_but_not_other_areas_or_hours():
     row = rows[0]
     assert row.time_bucket == "malam"  # 22:00 WIB
     assert row.area_name == "Area -7.815, 110.395"
-    # Rumus 10*(1-exp(-0.5^(umur/1825hari))) untuk kejadian 4,45 tahun lalu.
-    assert row.risk_score == pytest.approx(4.17, abs=0.05)
-    assert row.risk_level == "sedang"
+    # Rumus 10*(1-exp(-0.5^(umur/1825hari)/3)) untuk kejadian 4,45 tahun lalu (bobot ~0.54):
+    # satu insiden lama saja belum cukup untuk "sedang" (kalibrasi skala 3.0).
+    assert row.risk_score == pytest.approx(1.65, abs=0.05)
+    assert row.risk_level == "rendah"
     # Area/jam lain "relatif aman": tidak ada baris -> skor 0 di lookup.
     assert not any(r.time_bucket == "pagi" for r in rows)
 
 
 def test_more_incidents_in_same_area_and_hour_raise_score_but_never_exceed_ten():
     settings = get_settings()
-    one = compute_risk_scores([_incident()], AS_OF, settings)[0].risk_score
-    many = compute_risk_scores([_incident() for _ in range(50)], AS_OF, settings)[0]
+    own_cell = locate_area(*GEDONGKUNING, settings.risk_grid_cell_degrees)[2]
+
+    def own_row(rows):  # klaster padat juga menaikkan sel tetangga (R4): pilih sel kejadiannya sendiri
+        return next(r for r in rows if r.area_name == own_cell)
+
+    one = own_row(compute_risk_scores([_incident()], AS_OF, settings)).risk_score
+    many = own_row(compute_risk_scores([_incident() for _ in range(50)], AS_OF, settings))
 
     assert many.risk_score > one
     assert many.risk_score <= 10.0
@@ -211,9 +217,9 @@ def _incident_one_day_before(as_of: datetime) -> ScorableIncident:
     return _incident(when=as_of - timedelta(days=1))
 
 
-def test_score_is_higher_before_ramadan_than_in_a_normal_period_for_same_incident_age():
-    """TC-RSK-003: umur kejadian dibuat identik (1 hari) supaya yang berbeda
-    HANYA faktor musim."""
+def test_stored_base_score_does_not_depend_on_the_season_it_was_calculated_in():
+    """Pengali musim diterapkan saat BACA (lihat test_risk_calibration.py), bukan ditanam
+    ke skor tersimpan: umur kejadian identik -> skor dasar identik, di musim apa pun."""
     settings = get_settings()
     normal_as_of = datetime(2026, 9, 20, 12, 0, tzinfo=WIB)
     pre_ramadan_as_of = datetime(2027, 1, 30, 12, 0, tzinfo=WIB)
@@ -223,7 +229,7 @@ def test_score_is_higher_before_ramadan_than_in_a_normal_period_for_same_inciden
         [_incident_one_day_before(pre_ramadan_as_of)], pre_ramadan_as_of, settings
     )[0].risk_score
 
-    assert pre_ramadan > normal
+    assert pre_ramadan == normal
 
 
 # ----------------------------------------------- REQ-F-022 + persistensi

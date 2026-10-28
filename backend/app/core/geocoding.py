@@ -24,6 +24,18 @@ YOGYAKARTA_BBOX = (110.00, -8.25, 110.85, -7.50)  # minLon, minLat, maxLon, maxL
 YOGYAKARTA_PROXIMITY = (110.3695, -7.7956)  # pusat Kota Yogyakarta (lon, lat)
 YOGYAKARTA_REGION_SHORT_CODE = "ID-YO"
 
+# Titik pusat (lintang, bujur) kota/kabupaten DIY. Mapbox sering mengembalikan titik pusat
+# wilayah untuk nama tempat yang tidak dikenalinya; hasil yang jatuh dekat titik-titik ini
+# patut diragukan (lihat route_agent.generic_center_name). Koordinat PERKIRAAN (asumsi),
+# cukup untuk deteksi radius ratusan meter.
+DIY_GENERIC_CENTERS: dict[str, tuple[float, float]] = {
+    "Kota Yogyakarta": (-7.7956, 110.3695),
+    "Kabupaten Sleman": (-7.7160, 110.3557),
+    "Kabupaten Bantul": (-7.8880, 110.3285),
+    "Kabupaten Kulon Progo": (-7.8579, 110.1608),
+    "Kabupaten Gunungkidul": (-7.9644, 110.6018),
+}
+
 _GEOCODING_TIMEOUT_SECONDS = 3.0
 
 

@@ -6,18 +6,22 @@ from supabase import Client
 
 from app.agents.risk_agent import WIB, to_wib
 from app.agents.route_agent import (
+    AlternativeRoute,
     FlaggedArea,
     PlaceQuery,
     RouteAgentDeps,
     RouteCheckResult,
     RoutePointError,
+    describe_data_coverage,
     run_route_check,
 )
+from app.core.config import get_settings
 from app.core.directions import RouteNotFound, RouteServiceUnavailable
 from app.core.rate_limit import enforce_route_check_rate_limit
 from app.core.safe_log import safe_error_summary
 from app.core.supabase_client import get_supabase
 from app.schemas.route import (
+    AlternativeRouteOut,
     FlaggedAreaOut,
     PlaceInput,
     PointOut,
@@ -51,8 +55,22 @@ def _area_out(area: FlaggedArea) -> FlaggedAreaOut:
     )
 
 
+def _alternative_out(alternative: AlternativeRoute) -> AlternativeRouteOut:
+    coverage = describe_data_coverage(alternative.assessment)
+    return AlternativeRouteOut(
+        risk_level=alternative.assessment.level,
+        max_risk_score=alternative.assessment.max_risk_score,
+        distance_km=alternative.distance_km,
+        duration_minutes=alternative.duration_minutes,
+        data_coverage=coverage.coverage,
+        data_limited=coverage.limited,
+        is_lowest_risk=alternative.is_lowest_risk,
+    )
+
+
 def _to_response(result: RouteCheckResult) -> RouteCheckOut:
     assessment = result.assessment
+    coverage = describe_data_coverage(assessment, get_settings())
     return RouteCheckOut(
         risk_level=assessment.level,
         max_risk_score=assessment.max_risk_score,
@@ -68,6 +86,12 @@ def _to_response(result: RouteCheckResult) -> RouteCheckOut:
         duration_minutes=result.duration_minutes,
         departure_time=result.departure_time,
         time_buckets=list(result.time_buckets),
+        data_coverage=coverage.coverage,
+        data_limited=coverage.limited,
+        data_note=coverage.note,
+        location_notes=list(result.location_notes),
+        alternatives=[_alternative_out(a) for a in result.alternatives],
+        safer_alternative_available=any(a.is_lowest_risk for a in result.alternatives),
         narrative=result.narrative,
     )
 

@@ -117,9 +117,15 @@ def test_route_through_high_risk_area_is_flagged_high_and_lists_area_to_avoid():
 
 
 def test_medium_only_route_is_waspada_and_route_without_any_data_is_aman_with_coverage_shown():
-    medium = run_route_check(_deps(_score_rows(START_CELL, "sedang", 4.2)), COORDS_FROM, COORDS_TO, NIGHT)
+    # Aturan paparan (S2): "waspada" butuh >= route_min_medium_cells (2) sel sedang yang dilintasi.
+    route = _straight_route()
+    crossed = crossed_cells(sample_route(route.points, 250, 400), NIGHT, route.duration_s, get_settings())
+    first, second = crossed[0].area_name, crossed[1].area_name
+    rows = _score_rows(first, "sedang", 4.2) + _score_rows(second, "sedang", 4.2)
+
+    medium = run_route_check(_deps(rows), COORDS_FROM, COORDS_TO, NIGHT)
     assert medium.assessment.level == ROUTE_WASPADA
-    assert [a.risk_level for a in medium.assessment.flagged_areas] == ["sedang"]
+    assert [a.risk_level for a in medium.assessment.flagged_areas] == ["sedang", "sedang"]
 
     empty = run_route_check(_deps([]), COORDS_FROM, COORDS_TO, NIGHT)
     assert empty.assessment.level == ROUTE_AMAN

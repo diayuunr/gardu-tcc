@@ -45,8 +45,9 @@ def get_risk_score(
     rentang waktu `at` (REQ-F-020) — publik, tanpa login (REQ-F-041).
 
     Input divalidasi di sini (rentang lat/lon, format waktu, boolean) oleh
-    FastAPI/Pydantic. `at` hanya memilih bucket jam; pengali musiman sudah
-    tertanam di skor yang tersimpan saat perhitungan terakhir. Tanpa
+    FastAPI/Pydantic. `at` memilih bucket jam DAN tanggal untuk pengali musiman:
+    skor dasar tersimpan dikali pengali Ramadan pada tanggal itu saat dibaca
+    (dibatasi 10), lalu `risk_level` ditentukan dari skor akhir. Tanpa
     `include_narrative`, respons murni baca database (cepat, `narrative=null`).
     """
     moment = at or datetime.now(WIB)

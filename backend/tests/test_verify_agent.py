@@ -40,6 +40,10 @@ class _FakeQuery:
         self._filters.append(("neq", key, value))
         return self
 
+    def in_(self, key, values):
+        self._filters.append(("in", key, list(values)))
+        return self
+
     def limit(self, _n):
         return self
 
@@ -48,6 +52,8 @@ class _FakeQuery:
             if kind == "eq" and row.get(key) != value:
                 return False
             if kind == "neq" and row.get(key) == value:
+                return False
+            if kind == "in" and row.get(key) not in value:
                 return False
         return True
 
@@ -73,6 +79,11 @@ class _FakeQuery:
                     updated.append(row)
             return _FakeResponse(updated)
 
+        if self._op == "delete":
+            doomed = [row for row in rows if self._matches(row)]
+            rows[:] = [row for row in rows if row not in doomed]
+            return _FakeResponse(doomed)
+
         raise AssertionError(f"Operasi tidak dikenal: {self._op}")
 
 
@@ -88,6 +99,9 @@ class _FakeTable:
 
     def update(self, payload):
         return _FakeQuery(self, "update", payload)
+
+    def delete(self):
+        return _FakeQuery(self, "delete")
 
 
 class _FakeRpcCall:

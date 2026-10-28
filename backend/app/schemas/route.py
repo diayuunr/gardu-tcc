@@ -65,8 +65,10 @@ class RouteCheckRequest(BaseModel):
 
 
 class PointOut(BaseModel):
-    """Titik yang BENAR-BENAR dipakai untuk rute. `place_name` (kecamatan/desa, best-effort)
-    membiarkan pengguna mengecek hasil geocoding nama tempat, yang di Indonesia kasar."""
+    """Titik yang BENAR-BENAR dipakai untuk rute. `place_name` membiarkan pengguna mengecek hasil
+    geocoding nama tempat, yang di Indonesia kasar: nama kecamatan/desa bila reverse geocoding
+    berhasil, selain itu teks yang pengguna ketik sendiri atau label sel grid netral — sehingga
+    selalu terisi pada pemeriksaan yang berhasil."""
 
     latitude: float
     longitude: float
@@ -86,15 +88,34 @@ class FlaggedAreaOut(BaseModel):
     risk_level: Literal["sedang", "tinggi"]
 
 
+class AlternativeRouteOut(BaseModel):
+    """Ringkasan satu rute alternatif Mapbox, dinilai dengan aturan yang sama dengan rute utama.
+    `is_lowest_risk` = jelas lebih rendah risikonya dari rute utama DAN dari alternatif lain
+    (level lebih rendah, atau level sama dengan skor tertinggi lebih rendah); alternatif tanpa
+    data sama sekali tidak pernah ditandai. Bandingkan juga `data_coverage` tiap rute."""
+
+    risk_level: Literal["aman", "waspada", "berisiko_tinggi"]
+    max_risk_score: float
+    distance_km: float
+    duration_minutes: int
+    data_coverage: float
+    data_limited: bool
+    is_lowest_risk: bool
+
+
 class RouteCheckOut(BaseModel):
     """Hasil Cek Rute Aman (REQ-F-030/031/032).
 
-    `risk_level` adalah indikator sederhana (REQ-F-031). `areas_to_avoid` (REQ-F-032)
-    berisi area berisiko TINGGI yang dilintasi — terisi bila dan hanya bila rute
-    berisiko_tinggi; `areas_to_watch` berisi area berisiko sedang. "aman" berarti
-    tidak ada area sedang/tinggi TERCATAT, bukan jaminan: lihat `areas_with_data`
-    vs `areas_checked` untuk cakupan datanya. `narrative` (penjelasan Gemini)
-    opsional; None bukan error.
+    `risk_level` adalah indikator sederhana (REQ-F-031) dari paparan area sedang/tinggi
+    yang dilintasi (aturannya di docstring app/agents/route_agent.py). `areas_to_avoid`
+    (REQ-F-032) berisi area berisiko TINGGI yang dilintasi; `areas_to_watch` berisi area
+    berisiko sedang (bisa terisi walau status "aman": satu sel sedang tunggal tidak cukup untuk
+    "waspada"). "aman" berarti tidak ada paparan yang memenuhi syarat TERCATAT, bukan jaminan:
+    `data_coverage` (0..1) = `areas_with_data` / `areas_checked`, `data_limited` true bila datanya
+    tidak ada/terlalu sedikit (lalu `data_note` menjelaskan). `location_notes` memuat catatan bila
+    geocoding titik diragukan. `alternatives` = ringkasan rute alternatif;
+    `safer_alternative_available` true bila salah satunya ditandai `is_lowest_risk`.
+    `narrative` (penjelasan Gemini) opsional; None bukan error.
     """
 
     risk_level: Literal["aman", "waspada", "berisiko_tinggi"]
@@ -109,4 +130,10 @@ class RouteCheckOut(BaseModel):
     duration_minutes: int
     departure_time: datetime
     time_buckets: list[TimeBucket]
+    data_coverage: float = 0.0
+    data_limited: bool = False
+    data_note: str | None = None
+    location_notes: list[str] = Field(default_factory=list)
+    alternatives: list[AlternativeRouteOut] = Field(default_factory=list)
+    safer_alternative_available: bool = False
     narrative: str | None = None

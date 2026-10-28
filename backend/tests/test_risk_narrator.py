@@ -312,27 +312,32 @@ def test_clean_narrative_strips_markdown_and_extra_whitespace():
 # --------------------------------------------------------------- fakta & prompt
 
 
-def test_season_facts_follow_the_date_the_score_was_calculated():
+def test_season_facts_come_from_the_multiplier_actually_applied_when_the_score_was_read():
     settings = get_settings()
 
-    normal = build_narrative_facts(_lookup(last_calculated_at=NORMAL_DAY), settings)
-    assert (normal.season_known, normal.season, normal.season_multiplier) == (True, None, 1.0)
+    normal = build_narrative_facts(_lookup(), settings)
+    assert (normal.season, normal.season_multiplier) == (None, 1.0)
+    assert "tidak ada pengaruh musim" in render_facts(normal)
 
-    pre = build_narrative_facts(_lookup(last_calculated_at=PRE_RAMADAN_DAY), settings)
+    pre = build_narrative_facts(
+        _lookup(season=JELANG_RAMADAN, season_multiplier=settings.risk_ramadan_multiplier), settings
+    )
     assert (pre.season, pre.season_multiplier) == (JELANG_RAMADAN, settings.risk_ramadan_multiplier)
+    assert "dikali 1.30" in render_facts(pre)
 
+    sahur_multiplier = settings.risk_ramadan_multiplier * settings.risk_ramadan_dini_hari_multiplier
     sahur = build_narrative_facts(
-        _lookup(time_bucket="dini_hari", last_calculated_at=DURING_RAMADAN_DAY), settings
+        _lookup(time_bucket="dini_hari", season=SELAMA_RAMADAN, season_multiplier=sahur_multiplier), settings
     )
     assert sahur.season == SELAMA_RAMADAN
-    assert sahur.season_multiplier == pytest.approx(
-        settings.risk_ramadan_multiplier * settings.risk_ramadan_dini_hari_multiplier
-    )
+    assert sahur.season_multiplier == pytest.approx(sahur_multiplier)
     assert "sahur" in render_facts(sahur)
 
-    unknown = build_narrative_facts(_lookup(last_calculated_at=None), settings)
-    assert unknown.season_known is False
-    assert "jangan menyinggung musim" in render_facts(unknown)
+
+def test_narrative_says_so_when_the_score_comes_only_from_neighbouring_areas():
+    facts = build_narrative_facts(_lookup(contributing_incident_count=0), get_settings())
+
+    assert "pengaruh insiden di area-area sekitarnya" in render_facts(facts)
 
 
 def test_prompt_sent_to_gemini_has_only_aggregate_facts_and_output_is_parsed(monkeypatch):
@@ -346,7 +351,7 @@ def test_prompt_sent_to_gemini_has_only_aggregate_facts_and_output_is_parsed(mon
     monkeypatch.setattr(gemini_narration, "ChatGoogleGenerativeAI", lambda **_kwargs: RunnableLambda(fake_llm))
 
     text = risk_narrator._invoke_narration(
-        build_narrative_facts(_lookup(last_calculated_at=PRE_RAMADAN_DAY), get_settings()), "dummy-key-not-real"
+        build_narrative_facts(_lookup(season=JELANG_RAMADAN, season_multiplier=1.3), get_settings()), "dummy-key-not-real"
     )
 
     prompt_text = "\n".join(message.content for message in sent_messages)

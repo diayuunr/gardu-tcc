@@ -1,6 +1,6 @@
 import logging
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import httpx
 
@@ -26,17 +26,22 @@ class RouteServiceUnavailable(Exception):
 
 @dataclass(frozen=True)
 class RouteGeometry:
-    """Rute hasil Mapbox: titik-titik (lintang, bujur) berurutan, jarak, dan durasi."""
+    """Rute hasil Mapbox: titik-titik (lintang, bujur) berurutan, jarak, dan durasi.
+
+    `alternatives` = rute alternatif dari panggilan YANG SAMA (maks `route_max_alternatives`),
+    tanpa alternatif bersarang; kosong bila Mapbox tidak menemukan alternatif."""
 
     points: tuple[tuple[float, float], ...]
     distance_m: float
     duration_s: float
+    alternatives: tuple["RouteGeometry", ...] = ()
 
 
 def fetch_route(
     origin: tuple[float, float], destination: tuple[float, float]
 ) -> RouteGeometry:
-    """Ambil rute mengemudi asal -> tujuan dari Mapbox Directions API.
+    """Ambil rute mengemudi asal -> tujuan dari Mapbox Directions API, beserta rute alternatif
+    (maks `route_max_alternatives`) dalam SATU permintaan yang sama — tidak menambah panggilan.
 
     `origin`/`destination` berupa (latitude, longitude). Melempar RouteNotFound
     kalau tidak ada rute, RouteServiceUnavailable untuk semua kegagalan lain.
@@ -48,6 +53,7 @@ def fetch_route(
         logger.warning("MAPBOX_TOKEN belum diset, pemeriksaan rute tidak bisa dijalankan")
         raise RouteServiceUnavailable("MAPBOX_TOKEN belum diset")
 
+    max_alternatives = max(0, settings.route_max_alternatives)
     url = _DIRECTIONS_URL.format(
         lon1=origin[1], lat1=origin[0], lon2=destination[1], lat2=destination[0]
     )
@@ -58,7 +64,7 @@ def fetch_route(
                 "access_token": settings.mapbox_token,
                 "geometries": "geojson",
                 "overview": "full",
-                "alternatives": "false",
+                "alternatives": "true" if max_alternatives > 0 else "false",
             },
             timeout=_DIRECTIONS_TIMEOUT_SECONDS,
         )
@@ -76,7 +82,19 @@ def fetch_route(
         logger.warning("Directions Mapbox mengembalikan kode tak terduga: %s", code)
         raise RouteServiceUnavailable("respons Mapbox Directions tidak dikenali")
 
-    return _parse_route(routes[0])
+    primary = _parse_route(routes[0])
+    return replace(primary, alternatives=_parse_alternatives(routes[1 : 1 + max_alternatives]))
+
+
+def _parse_alternatives(raw_routes: list[dict]) -> tuple[RouteGeometry, ...]:
+    """Alternatif yang rusak dilewati saja: rute utama tetap valid dan tetap dinilai."""
+    alternatives: list[RouteGeometry] = []
+    for raw in raw_routes:
+        try:
+            alternatives.append(_parse_route(raw))
+        except RouteServiceUnavailable:
+            continue
+    return tuple(alternatives)
 
 
 def _parse_route(route: dict) -> RouteGeometry:
