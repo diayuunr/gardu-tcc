@@ -1,11 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import Reveal from '@/components/Reveal';
+<<<<<<< HEAD
 import { PLACES } from '@/lib/gazetteer';
 import { BACKEND_URL, readErrorDetail } from '@/lib/api';
+=======
+import { supabase } from '@/lib/supabase';
+>>>>>>> origin/main
 
 const INCIDENT_TYPES = [
   'Pencurian dengan kekerasan',
@@ -19,12 +23,23 @@ const INCIDENT_TYPES = [
 
 type Phase = 'form' | 'sending' | 'done';
 
+type Area = {
+  kode: string;
+  nama: string;
+  tingkat: 'kabkota' | 'kecamatan' | 'kelurahan';
+  parent_kode: string | null;
+};
+
 export default function LaporPage() {
   const [description, setDescription] = useState('');
 
-  const [locationText, setLocationText] = useState(
-    PLACES[0]?.name ?? ''
-  );
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [areasLoading, setAreasLoading] = useState(true);
+  const [areasError, setAreasError] = useState('');
+  const [kabkotaKode, setKabkotaKode] = useState('');
+  const [kecamatanKode, setKecamatanKode] = useState('');
+  const [kelurahanKode, setKelurahanKode] = useState('');
+  const [jalan, setJalan] = useState('');
 
   const [incidentType, setIncidentType] = useState(
     INCIDENT_TYPES[0]
@@ -39,6 +54,49 @@ export default function LaporPage() {
 
     return d.toISOString().slice(0, 16);
   });
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAreas() {
+      if (!supabase) {
+        if (active) {
+          setAreasError('Konfigurasi Supabase belum tersedia. Periksa NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.');
+          setAreasLoading(false);
+        }
+        return;
+      }
+
+      const { data, error: queryError } = await supabase
+        .from('areas')
+        .select('kode, nama, tingkat, parent_kode')
+        .in('tingkat', ['kabkota', 'kecamatan', 'kelurahan'])
+        .order('nama', { ascending: true });
+
+      if (!active) return;
+
+      if (queryError) {
+        setAreasError('Daftar wilayah gagal dimuat dari Supabase. Pastikan tabel areas dapat dibaca oleh public/anon.');
+        setAreasLoading(false);
+        console.error('Gagal memuat areas:', queryError);
+        return;
+      }
+
+      setAreas((data ?? []) as Area[]);
+      setAreasLoading(false);
+    }
+
+    loadAreas();
+    return () => { active = false; };
+  }, []);
+
+  const kabkotaOptions = areas.filter((area) => area.tingkat === 'kabkota');
+  const kecamatanOptions = areas.filter(
+    (area) => area.tingkat === 'kecamatan' && area.parent_kode === kabkotaKode
+  );
+  const kelurahanOptions = areas.filter(
+    (area) => area.tingkat === 'kelurahan' && area.parent_kode === kecamatanKode
+  );
 
   const [error, setError] = useState('');
 
@@ -67,10 +125,13 @@ export default function LaporPage() {
       return;
     }
 
-    if (!locationText.trim()) {
-      setError(
-        'Lokasi kejadian wajib diisi.'
-      );
+    if (!kabkotaKode || !kecamatanKode) {
+      setError('Kabupaten/kota dan kecamatan wajib dipilih.');
+      return;
+    }
+
+    if (jalan.trim().length > 200) {
+      setError('Nama jalan atau patokan maksimal 200 karakter.');
       return;
     }
 
@@ -84,12 +145,20 @@ export default function LaporPage() {
     setPhase('sending');
 
     try {
+<<<<<<< HEAD
       // Verifikasi AI berjalan otomatis di background backend setelah
       // laporan tersimpan, jadi cukup satu panggilan ke POST /reports.
       // Backend belum punya field jenis kejadian, jadi dilampirkan di
       // awal deskripsi agar tetap terbaca oleh verifikator.
       const response = await fetch(`${BACKEND_URL}/reports`, {
         method: 'POST',
+=======
+      const backendUrl = (
+        process.env.NEXT_PUBLIC_BACKEND_URL ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        'http://localhost:8000'
+      ).replace(/\/$/, '');
+>>>>>>> origin/main
 
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +176,85 @@ export default function LaporPage() {
         }),
       });
 
+<<<<<<< HEAD
       if (!response.ok) {
+=======
+          body: JSON.stringify({
+            description: description.trim(),
+            kabkota_kode: kabkotaKode,
+            kecamatan_kode: kecamatanKode,
+            kelurahan_kode: kelurahanKode || null,
+            jalan: jalan.trim() || null,
+
+            /*
+             * Jangan menggunakan toISOString()
+             * agar waktu lokal yang dipilih user
+             * tidak bergeser ke UTC.
+             *
+             * Contoh:
+             * 2026-09-20T00:00
+             *
+             * dikirim sebagai:
+             * 2026-09-20T00:00:00
+             */
+
+            reported_at:
+              `${occurredAt}:00`,
+          }),
+        }
+      );
+
+      /*
+       * Cek apakah pembuatan laporan berhasil
+       */
+
+      if (!reportResponse.ok) {
+        let detail =
+          'Gagal mengirim laporan.';
+
+        try {
+          const errorData =
+            await reportResponse.json();
+
+          if (errorData?.detail) {
+            detail =
+              errorData.detail;
+          }
+        } catch {
+          // Abaikan jika response bukan JSON
+        }
+
+        throw new Error(detail);
+      }
+
+      /*
+       * Response dari:
+       * POST /reports
+       *
+       * {
+       *   "id": "...",
+       *   "status": "menunggu_verifikasi"
+       * }
+       */
+
+      const reportData =
+        await reportResponse.json();
+
+      console.log(
+        '=== REPORT CREATED ==='
+      );
+
+      console.log(reportData);
+
+      const reportId =
+        reportData.id;
+
+      /*
+       * Pastikan ID laporan tersedia
+       */
+
+      if (!reportId) {
+>>>>>>> origin/main
         throw new Error(
           await readErrorDetail(response, 'Gagal mengirim laporan.'),
         );
@@ -131,6 +278,10 @@ export default function LaporPage() {
 
   function reset() {
     setDescription('');
+    setKabkotaKode('');
+    setKecamatanKode('');
+    setKelurahanKode('');
+    setJalan('');
     setError('');
     setSuccessMessage('');
 
@@ -343,67 +494,110 @@ export default function LaporPage() {
 
                   </div>
 
-                  {/* LOKASI + WAKTU */}
-                  <div className="grid gap-6 sm:grid-cols-2">
-
-                    {/* LOKASI */}
+                  {/* LOKASI BERJENJANG DARI SUPABASE */}
+                  <div className="space-y-5">
                     <div>
-
                       <label className="mb-2 block text-sm font-medium text-zinc-300">
-                        Lokasi kejadian
+                        Kabupaten/kota <span className="text-emerald-300">*</span>
                       </label>
-
                       <select
-                        value={locationText}
-                        onChange={(e) =>
-                          setLocationText(
-                            e.target.value
-                          )
-                        }
+                        value={kabkotaKode}
+                        onChange={(e) => {
+                          setKabkotaKode(e.target.value);
+                          setKecamatanKode('');
+                          setKelurahanKode('');
+                        }}
                         className="input"
-                        disabled={
-                          phase === 'sending'
-                        }
+                        disabled={phase === 'sending' || areasLoading || !!areasError}
+                        required
                       >
-
-                        {PLACES.map(
-                          (place) => (
-                            <option
-                              key={place.name}
-                              value={place.name}
-                            >
-                              {place.name}
-                            </option>
-                          )
-                        )}
-
+                        <option value="">Pilih kabupaten/kota</option>
+                        {kabkotaOptions.map((area) => (
+                          <option key={area.kode} value={area.kode}>{area.nama}</option>
+                        ))}
                       </select>
-
                     </div>
 
-                    {/* WAKTU */}
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-zinc-300">
+                          Kecamatan <span className="text-emerald-300">*</span>
+                        </label>
+                        <select
+                          value={kecamatanKode}
+                          onChange={(e) => {
+                            setKecamatanKode(e.target.value);
+                            setKelurahanKode('');
+                          }}
+                          className="input"
+                          disabled={phase === 'sending' || !kabkotaKode || areasLoading}
+                          required
+                        >
+                          <option value="">Pilih kecamatan</option>
+                          {kecamatanOptions.map((area) => (
+                            <option key={area.kode} value={area.kode}>{area.nama}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-zinc-300">
+                          Kelurahan/desa <span className="text-zinc-500">(opsional)</span>
+                        </label>
+                        <select
+                          value={kelurahanKode}
+                          onChange={(e) => setKelurahanKode(e.target.value)}
+                          className="input"
+                          disabled={phase === 'sending' || !kecamatanKode || areasLoading}
+                        >
+                          <option value="">Pilih kelurahan/desa</option>
+                          {kelurahanOptions.map((area) => (
+                            <option key={area.kode} value={area.kode}>{area.nama}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
                     <div>
-
                       <label className="mb-2 block text-sm font-medium text-zinc-300">
-                        Perkiraan waktu kejadian
+                        Nama jalan atau patokan <span className="text-zinc-500">(opsional)</span>
                       </label>
-
                       <input
-                        type="datetime-local"
-                        value={occurredAt}
-                        onChange={(e) =>
-                          setOccurredAt(
-                            e.target.value
-                          )
-                        }
+                        type="text"
+                        value={jalan}
+                        onChange={(e) => setJalan(e.target.value)}
+                        maxLength={200}
+                        placeholder="Contoh: Jalan Kaliurang, dekat lampu merah"
                         className="input"
-                        disabled={
-                          phase === 'sending'
-                        }
+                        disabled={phase === 'sending'}
                       />
-
+                      <p className="mt-1 text-xs text-zinc-600">Maksimal 200 karakter. Jangan masukkan informasi identitas pribadi.</p>
                     </div>
 
+                    {areasLoading && (
+                      <p className="text-xs text-zinc-500">Memuat daftar wilayah dari Supabase...</p>
+                    )}
+                    {areasError && (
+                      <p className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-sm text-amber-200">{areasError}</p>
+                    )}
+                    {!areasLoading && !areasError && kabkotaOptions.length === 0 && (
+                      <p className="text-xs text-amber-300">Data wilayah belum tersedia di tabel areas.</p>
+                    )}
+                  </div>
+
+                  {/* WAKTU */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-zinc-300">
+                      Perkiraan waktu kejadian
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={occurredAt}
+                      onChange={(e) => setOccurredAt(e.target.value)}
+                      className="input"
+                      disabled={phase === 'sending'}
+                      required
+                    />
                   </div>
 
                   {/* ERROR */}

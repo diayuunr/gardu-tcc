@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div className="max-w-sm">
             <p className="font-display text-lg font-bold text-white">GARDU</p>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+            <p className="mt-2 text-sm leading-snug text-zinc-500">
               Sistem Kesadaran Komunitas dan Rute Aman Warga terhadap Kejahatan Jalanan (Klitih) di Yogyakarta
             </p>
             <div className="mt-6 flex items-center gap-4">

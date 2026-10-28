@@ -2,9 +2,14 @@ import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import HeroCard from '@/components/HeroCard';
 import { createClient } from '@/lib/supabase/server';
+import CountUp from '@/components/CountUp';
+import { FeaturesSection } from '@/components/FeaturesSection';
+import AgentsSections from '@/components/AgentsSections';
+import HowItWorksSection from '@/components/StepsSection';
 
 export const dynamic = 'force-dynamic';
 
+<<<<<<< HEAD
 const FEATURES = [
   {
     title: 'Pelaporan Anonim',
@@ -65,6 +70,8 @@ const AGENTS = [
   },
 ];
 
+=======
+>>>>>>> origin/main
 const STEPS = [
   {
     n: '01',
@@ -115,7 +122,7 @@ export default async function LandingPage() {
   return (
     <div>
       {/* HERO */}
-      <section className="relative overflow-hidden pb-24 pt-36">
+      <section className="relative overflow-hidden pb-24 pt-30">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-32 left-1/2 h-[480px] w-[720px] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
 
@@ -154,7 +161,7 @@ export default async function LandingPage() {
 
             <Reveal delay={0.2}>
               <p className="mt-6 max-w-xl text-md leading-relaxed text-zinc-400">
-                Gardu membantu warga dan mahasiswa lebih waspada saat beraktivitas di Yogyakarta, mulai dari melaporkan kejadian secara anonim, mengenali area rawan, hingga memeriksa kondisi rute sebelum berangkat.
+                Gardu membantu warga dan mahasiswa lebih waspada saat beraktivitas di <br></br>D. I. Yogyakarta, mulai dari melaporkan kejadian secara anonim, mengenali area rawan, hingga memeriksa kondisi rute sebelum berangkat.
               </p>
             </Reveal>
 
@@ -199,21 +206,25 @@ export default async function LandingPage() {
               <div className="mt-12 grid max-w-lg grid-cols-3 divide-x divide-line rounded-3xl border border-line bg-panel/50 backdrop-blur">
                 {[
                   {
-                    v: `${totalReports ?? 0}+`,
+                    v: totalReports ?? 0,
                     l: 'Laporan total',
                   },
                   {
+<<<<<<< HEAD
                     v: `${monitoredAreas}+`,
+=======
+                    v: monitoredAreas ?? 0,
+>>>>>>> origin/main
                     l: 'Area terpantau',
                   },
                   {
-                    v: `${riskPredictions ?? 0}+`,
+                    v: riskPredictions ?? 0,
                     l: 'Prediksi Risiko',
                   },
-                ].map((s) => (
+                ].map((s, i) => (
                   <div key={s.l} className="px-5 py-4">
                     <p className="font-display text-2xl font-bold text-emerald-300">
-                      {s.v}
+                      <CountUp value={s.v} suffix="+" />
                     </p>
 
                     <p className="mt-1 text-[11px] leading-snug text-zinc-500">
@@ -241,13 +252,12 @@ export default async function LandingPage() {
               aria-hidden={dup === 1}
             >
               {[
-                'Pencegahan',
-                'Kesadaran Situasional',
-                'Tanpa Identitas',
-                'Data Terbuka',
+                'Tolak Kekerasan',
+                'Laporan Anonim',
                 'Rute Aman',
-                'Komunitas',
-                'Bukan Penghakiman',
+                'Cek Jalur',
+                'Kesadaran Sosial',
+                'Dari Warga Untuk Warga',
               ].map((t) => (
                 <span
                   key={t}
@@ -263,170 +273,16 @@ export default async function LandingPage() {
       </div>
 
       {/* FITUR */}
-      <section className="container-x py-24">
-        <Reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">
-            Fitur Utama
-          </p>
+      <FeaturesSection />
 
-          <h2 className="mt-3 max-w-2xl font-display text-3xl font-bold text-white sm:text-4xl">
-            Satu platform, dari lapor sampai selamat sampai tujuan.
-          </h2>
-        </Reveal>
-
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((f, i) => (
-            <Reveal key={f.title} delay={i * 0.07}>
-              <Link
-                href={f.href}
-                className="group glass-card block h-full p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-400/30 hover:shadow-glow"
-              >
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-400/10 ring-1 ring-emerald-400/25 transition group-hover:bg-emerald-400/20">
-                  <svg
-                    width="21"
-                    height="21"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#34d399"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d={f.icon} />
-                  </svg>
-                </span>
-
-                <h3 className="mt-5 font-display text-lg font-semibold text-white">
-                  {f.title}
-                </h3>
-
-                <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-                  {f.desc}
-                </p>
-
-                <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 opacity-0 transition-all duration-300 group-hover:opacity-100">
-                  Buka fitur
-
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 12h14M13 6l6 6-6 6" />
-                  </svg>
-                </span>
-              </Link>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* AI AGENTS */}
-      <section className="border-y border-line bg-panel/40 py-24">
-        <div className="container-x">
-          <Reveal>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">
-              Arsitektur AI
-            </p>
-
-            <h2 className="mt-3 max-w-2xl font-display text-3xl font-bold text-white sm:text-4xl">
-              Tiga AI Agent bekerja di balik layar.
-            </h2>
-
-            <p className="mt-4 max-w-2xl text-zinc-500">
-              Setiap agent punya peran spesifik dan diorkestrasi sebagai alur yang
-              dapat ditelusuri, bukan sekadar pemanggilan API tersebar.
-            </p>
-          </Reveal>
-
-          <div className="mt-12 grid gap-5 lg:grid-cols-3">
-            {AGENTS.map((a, i) => (
-              <Reveal key={a.name} delay={i * 0.1}>
-                <div className="glass-card h-full p-6">
-                  <div className="flex items-center justify-between">
-                    <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-400/25">
-                      Agent {i + 1}
-                    </span>
-
-                    <span className="text-[11px] text-zinc-600">
-                      {a.tag}
-                    </span>
-                  </div>
-
-                  <h3 className="mt-5 font-display text-xl font-semibold text-white">
-                    {a.name}
-                  </h3>
-
-                  <p className="mt-1 text-sm font-medium text-emerald-400/80">
-                    {a.role}
-                  </p>
-
-                  <p className="mt-3 text-sm leading-relaxed text-zinc-500">
-                    {a.desc}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* AGENTS */}
+      <AgentsSections />
 
       {/* CARA KERJA */}
-      <section className="container-x py-24">
-        <Reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">
-            Alur Sistem
-          </p>
-
-          <h2 className="mt-3 font-display text-3xl font-bold text-white sm:text-4xl">
-            Dari laporan menjadi peringatan.
-          </h2>
-        </Reveal>
-
-        <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((s, i) => (
-            <Reveal key={s.n} delay={i * 0.09}>
-              <div className="relative h-full rounded-3xl border border-line bg-panel/50 p-6">
-                <span className="font-display text-4xl font-bold text-emerald-400/25">
-                  {s.n}
-                </span>
-
-                <h3 className="mt-3 font-display text-lg font-semibold text-white">
-                  {s.title}
-                </h3>
-
-                <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-                  {s.desc}
-                </p>
-
-                {i < STEPS.length - 1 && (
-                  <svg
-                    className="absolute -right-4 top-1/2 hidden -translate-y-1/2 text-emerald-400/40 lg:block"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 12h14M13 6l6 6-6 6" />
-                  </svg>
-                )}
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
+      <HowItWorksSection />
 
       {/* ETIKA + CTA */}
-      <section className="container-x pb-24">
+      <section className="container-x pb-24 pt-15">
         <Reveal>
           <div className="glass-card relative overflow-hidden p-10 text-center sm:p-14">
             <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[520px] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
