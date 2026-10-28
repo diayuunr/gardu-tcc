@@ -11,7 +11,7 @@ export default function RiskBadge({ level, score }: { level: RiskLevel; score?: 
         <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: s.hex }} />
       </span>
       {s.label}
-      {typeof score === 'number' && <span className="opacity-70">- {score.toFixed(0)}</span>}
+      {typeof score === 'number' && <span className="opacity-70">- {score.toFixed(1)}</span>}
     </span>
   );
 }

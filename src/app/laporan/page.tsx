@@ -9,16 +9,16 @@ import { supabase } from '@/lib/supabase';
 type ReportStatus =
   | 'menunggu_verifikasi'
   | 'terverifikasi'
-  | 'duplikat'
-  | 'hoaks';
+  | 'ditandai_duplikat'
+  | 'ditandai_hoaks';
 
 type ReportHistory = {
   id: string;
   description: string;
-  location: string | null;
-  lat: number | null;
-  lng: number | null;
-  reported_at: string;
+  location_text: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  occurred_at: string;
   status: ReportStatus | string | null;
 };
 
@@ -31,18 +31,18 @@ const STATUS_STYLE: Record<string, string> = {
   terverifikasi:
     'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
 
-  duplikat:
+  ditandai_duplikat:
     'border-sky-400/30 bg-sky-400/10 text-sky-300',
 
-  hoaks:
+  ditandai_hoaks:
     'border-red-400/30 bg-red-400/10 text-red-300',
 };
 
 const STATUS_LABEL: Record<string, string> = {
   menunggu_verifikasi: 'Menunggu verifikasi',
   terverifikasi: 'Terverifikasi',
-  duplikat: 'Duplikat',
-  hoaks: 'Hoaks',
+  ditandai_duplikat: 'Duplikat',
+  ditandai_hoaks: 'Hoaks',
 };
 
 export default function LaporanHistoryPage() {
@@ -74,9 +74,9 @@ export default function LaporanHistoryPage() {
           await supabase
             .from('reports')
             .select(
-              'id, description, location, lat, lng, reported_at, status',
+              'id, description, location_text, latitude, longitude, occurred_at, status',
             )
-            .order('reported_at', {
+            .order('occurred_at', {
               ascending: false,
             });
 
@@ -88,11 +88,6 @@ export default function LaporanHistoryPage() {
 
           throw supabaseError;
         }
-
-        console.log(
-          'HISTORI LAPORAN:',
-          data,
-        );
 
         setReports(
           (data as ReportHistory[]) ?? [],
@@ -426,7 +421,7 @@ export default function LaporanHistoryPage() {
 
                             <span className="text-xs text-zinc-600">
                               {formatDate(
-                                report.reported_at,
+                                report.occurred_at,
                               )}
                             </span>
                           </div>
@@ -444,14 +439,14 @@ export default function LaporanHistoryPage() {
                               </span>
 
                               <span>
-                                {report.location ||
+                                {report.location_text ||
                                   'Lokasi tidak tersedia'}
                               </span>
                             </span>
 
-                            {report.lat !==
+                            {report.latitude !==
                               null &&
-                              report.lng !==
+                              report.longitude !==
                                 null && (
                                 <>
                                   <span className="text-zinc-700">
@@ -459,11 +454,11 @@ export default function LaporanHistoryPage() {
                                   </span>
 
                                   <span>
-                                    {report.lat.toFixed(
+                                    {report.latitude.toFixed(
                                       4,
                                     )}
                                     ,{' '}
-                                    {report.lng.toFixed(
+                                    {report.longitude.toFixed(
                                       4,
                                     )}
                                   </span>

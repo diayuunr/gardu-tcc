@@ -377,10 +377,10 @@ export default function RiskMap({
 
           paint: {
             /*
-             * SCORE 0–100
+             * SCORE 0–10
              *
-             * 0    → 0
-             * 100  → 1
+             * 0   → 0
+             * 10  → 1
              */
 
             'heatmap-weight': [
@@ -391,16 +391,7 @@ export default function RiskMap({
               0,
               0,
 
-              25,
-              0.25,
-
-              50,
-              0.5,
-
-              75,
-              0.75,
-
-              100,
+              10,
               1,
             ],
 
@@ -561,17 +552,14 @@ export default function RiskMap({
               0,
               '#4c8c6b',
 
-              25,
-              '#4c8c6b',
-
-              50,
+              3,
               '#d4a24c',
 
-              75,
-              '#f2a65a',
-
-              100,
+              7,
               '#b85c4c',
+
+              10,
+              '#7f1d1d',
             ],
             'circle-stroke-color':
               '#e8e6e1',
@@ -692,7 +680,7 @@ export default function RiskMap({
 
             const level =
               properties.level ??
-              'rendah';
+              'aman';
 
             /*
              * Popup Mapbox
@@ -760,7 +748,7 @@ export default function RiskMap({
                     </span>
 
                     <strong>
-                      ${score.toFixed(0)}
+                      ${score.toFixed(1)}
                     </strong>
                   </div>
                 </div>

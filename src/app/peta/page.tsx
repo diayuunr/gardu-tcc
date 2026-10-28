@@ -6,7 +6,16 @@ import { motion } from 'framer-motion';
 
 import Reveal from '@/components/Reveal';
 import RiskBadge from '@/components/RiskBadge';
-import { createClient } from '@/lib/supabase/client';
+import {
+  BACKEND_URL,
+  BackendRiskLevel,
+  TIME_BUCKETS,
+  TimeBucket,
+  currentTimeBucket,
+  formatTimeBucket,
+  readErrorDetail,
+  toUiLevel,
+} from '@/lib/api';
 import { RiskPoint } from '@/lib/types';
 
 const RiskMap = dynamic(
@@ -21,132 +30,31 @@ const RiskMap = dynamic(
   },
 );
 
-const TIME_SLOT_ORDER = [
-  'dini_hari',
-  'pagi',
-  'siang',
-  'sore',
-  'malam',
-];
+type HeatmapCell = {
+  area_name: string;
+  latitude: number;
+  longitude: number;
+  risk_score: number;
+  risk_level: BackendRiskLevel;
+  contributing_incident_count: number;
+};
 
-function formatTimeSlot(value: string) {
-  return value
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function getTimeSlotOrder(value: string) {
-  const index = TIME_SLOT_ORDER.indexOf(value);
-
-  return index === -1 ? 999 : index;
-}
-
-function getRiskLevel(
-  score: number,
-): 'aman' | 'waspada' | 'rawan' {
-  if (score >= 70) {
-    return 'rawan';
-  }
-
-  if (score >= 40) {
-    return 'waspada';
-  }
-
-  return 'aman';
-}
-
-function getCurrentTimeSlot() {
-  const hour = new Date().getHours();
-
-  if (hour < 5) {
-    return 'dini_hari';
-  }
-
-  if (hour < 11) {
-    return 'pagi';
-  }
-
-  if (hour < 15) {
-    return 'siang';
-  }
-
-  if (hour < 18) {
-    return 'sore';
-  }
-
-  return 'malam';
-}
+type HeatmapResponse = {
+  time_bucket: TimeBucket;
+  cells: HeatmapCell[];
+  updated_at: string | null;
+};
 
 export default function PetaPage() {
   const [selectedTimeSlot, setSelectedTimeSlot] =
-    useState(getCurrentTimeSlot());
+    useState<TimeBucket>(currentTimeBucket());
 
   const [scores, setScores] = useState<RiskPoint[]>([]);
-
-  const [timeSlots, setTimeSlots] =
-    useState<string[]>([]);
 
   const [loading, setLoading] = useState(true);
 
   const [error, setError] =
     useState<string | null>(null);
-
-  // ==========================================
-  // LOAD TIME SLOTS
-  // ==========================================
-
-  useEffect(() => {
-    let alive = true;
-
-    async function loadTimeSlots() {
-      const supabase = createClient();
-
-      const { data, error } = await supabase
-        .from('risk_scores')
-        .select('time_slot');
-
-      if (!alive) return;
-
-      if (error) {
-        console.error(
-          'TIME SLOT ERROR:',
-          error,
-        );
-
-        setError(error.message);
-        return;
-      }
-
-      const uniqueSlots = Array.from(
-        new Set(
-          (data ?? []).map(
-            (row) => row.time_slot,
-          ),
-        ),
-      );
-
-      uniqueSlots.sort(
-        (a, b) =>
-          getTimeSlotOrder(a) -
-          getTimeSlotOrder(b),
-      );
-
-      setTimeSlots(uniqueSlots);
-
-      if (
-        uniqueSlots.length > 0 &&
-        !uniqueSlots.includes(selectedTimeSlot)
-      ) {
-        setSelectedTimeSlot(uniqueSlots[0]);
-      }
-    }
-
-    loadTimeSlots();
-
-    return () => {
-      alive = false;
-    };
-  }, [selectedTimeSlot]);
 
   // ==========================================
   // LOAD RISK DATA
@@ -159,141 +67,47 @@ export default function PetaPage() {
       setLoading(true);
       setError(null);
 
-      const supabase = createClient();
-
       try {
-        // --------------------------------------
-        // 1. Ambil risk score
-        // --------------------------------------
-
-        const {
-          data: riskData,
-          error: riskError,
-        } = await supabase
-          .from('risk_scores')
-          .select(
-            'area, time_slot, score',
-          )
-          .eq(
-            'time_slot',
+        const response = await fetch(
+          `${BACKEND_URL}/risk/heatmap?time_bucket=${encodeURIComponent(
             selectedTimeSlot,
-          )
-          .order('score', {
-            ascending: false,
-          });
+          )}`,
+          {
+            headers: { Accept: 'application/json' },
+          },
+        );
 
-        if (riskError) {
-          throw riskError;
-        }
-
-        // --------------------------------------
-        // 2. Ambil koordinat area
-        // --------------------------------------
-
-        const {
-          data: areasData,
-          error: areasError,
-        } = await supabase
-          .from('areas')
-          .select(
-            'area, lat, lng',
+        if (!response.ok) {
+          throw new Error(
+            await readErrorDetail(
+              response,
+              'Gagal mengambil data kerawanan.',
+            ),
           );
-
-        if (areasError) {
-          throw areasError;
         }
 
-        console.log(
-          '==============================',
-        );
+        const data: HeatmapResponse =
+          await response.json();
 
-        console.log(
-          'RISK DATA:',
-          JSON.stringify(
-            riskData,
-            null,
-            2,
-          ),
-        );
-
-        console.log(
-          'AREAS DATA:',
-          JSON.stringify(
-            areasData,
-            null,
-            2,
-          ),
-        );
-
-        // --------------------------------------
-        // 3. Gabungkan risk_scores + areas
-        // --------------------------------------
-
-        const points = (riskData ?? [])
-          .map((row) => {
-            const area = (areasData ?? []).find(
-              (item) =>
-                item.area.trim().toLowerCase() ===
-                row.area.trim().toLowerCase(),
-            );
-
-            console.log(
-              'MATCH AREA:',
-              row.area,
-              '=>',
-              area,
-            );
-
-            if (!area) {
-              console.warn(
-                'KOORDINAT TIDAK DITEMUKAN:',
-                row.area,
-              );
-
-              return null;
-            }
-
-            const score = Number(row.score);
-
-            const point: RiskPoint = {
-              area_name: row.area,
-              lat: Number(area.lat),
-              lng: Number(area.lng),
-              score,
-              level: getRiskLevel(score),
-            };
-
-            return point;
-          })
+        const points: RiskPoint[] = data.cells
+          .map((cell) => ({
+            area_name: cell.area_name,
+            lat: Number(cell.latitude),
+            lng: Number(cell.longitude),
+            score: Number(cell.risk_score),
+            level: toUiLevel(cell.risk_level),
+          }))
           .filter(
-            (point): point is RiskPoint =>
-              point !== null &&
+            (point) =>
               Number.isFinite(point.lat) &&
-              Number.isFinite(point.lng),
+              Number.isFinite(point.lng) &&
+              Number.isFinite(point.score),
           );
-
-        console.log(
-          'FINAL RISK POINTS:',
-          JSON.stringify(
-            points,
-            null,
-            2,
-          ),
-        );
-
-        console.log(
-          '==============================',
-        );
 
         if (!alive) return;
 
         setScores(points);
       } catch (err) {
-        console.error(
-          'LOAD RISK ERROR:',
-          err,
-        );
-
         if (!alive) return;
 
         setError(
@@ -310,9 +124,7 @@ export default function PetaPage() {
       }
     }
 
-    if (selectedTimeSlot) {
-      loadRiskScores();
-    }
+    loadRiskScores();
 
     return () => {
       alive = false;
@@ -414,7 +226,7 @@ export default function PetaPage() {
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
-            {timeSlots.map(
+            {TIME_BUCKETS.map(
               (slot) => {
                 const active =
                   selectedTimeSlot ===
@@ -437,7 +249,7 @@ export default function PetaPage() {
                         : 'border border-line bg-ink/40 text-zinc-400 hover:border-emerald-400/30 hover:text-emerald-300',
                     ].join(' ')}
                   >
-                    {formatTimeSlot(
+                    {formatTimeBucket(
                       slot,
                     )}
                   </button>
@@ -486,17 +298,17 @@ export default function PetaPage() {
 
                 <span className="flex items-center gap-2">
                   <i className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                  Aman (&lt;40)
+                  Aman (&lt;3)
                 </span>
 
                 <span className="flex items-center gap-2">
                   <i className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                  Waspada (40–69)
+                  Waspada (3–6,9)
                 </span>
 
                 <span className="flex items-center gap-2">
                   <i className="h-2.5 w-2.5 rounded-full bg-red-400" />
-                  Rawan (70+)
+                  Rawan (7–10)
                 </span>
 
               </div>
@@ -514,7 +326,7 @@ export default function PetaPage() {
 
               <p className="text-xs uppercase tracking-widest text-zinc-500">
                 Ringkasan{' '}
-                {formatTimeSlot(
+                {formatTimeBucket(
                   selectedTimeSlot,
                 )}
               </p>

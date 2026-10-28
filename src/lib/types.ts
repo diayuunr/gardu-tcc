@@ -1,11 +1,4 @@
 export type RiskLevel = 'aman' | 'waspada' | 'rawan';
-export type ReportStatus = 'menunggu_verifikasi' | 'terverifikasi' | 'duplikat' | 'hoaks';
-
-export function levelOf(score: number): RiskLevel {
-  if (score < 40) return 'aman';
-  if (score < 70) return 'waspada';
-  return 'rawan';
-}
 
 export const LEVEL_STYLE: Record<
   RiskLevel,
@@ -16,33 +9,32 @@ export const LEVEL_STYLE: Record<
   rawan:   { label: 'Rawan',   text: 'text-red-300',     bg: 'bg-red-400/10',     ring: 'ring-red-400/30',     hex: '#f87171' },
 };
 
+// Skor 0-10 dari backend; level sudah ditentukan backend.
 export type RiskPoint = {
   area_name: string;
   lat: number;
   lng: number;
   score: number;
-  level: 'aman' | 'waspada' | 'rawan';
+  level: RiskLevel;
 };
 
-export interface Report {
-  id: string;
-  description: string;
-  location_text: string;
-  occurred_at: string;
-  incident_type?: string | null;
-  status: ReportStatus;
-  ai_summary?: string | null;
-  flagged_reason?: string | null;
-  created_at?: string;
+export interface FlaggedArea {
+  area_name: string;
+  place_name: string | null;
+  risk_score: number;
 }
-
-export interface Hotspot { name: string; score: number; }
 
 export interface RouteResult {
   status: RiskLevel;
   maxScore: number;
-  hotspots: Hotspot[];
-  checkedSamples: number;
+  avoid: FlaggedArea[];
+  watch: FlaggedArea[];
+  areasChecked: number;
+  areasWithData: number;
+  distanceKm: number;
+  durationMinutes: number;
+  originName: string | null;
+  destinationName: string | null;
 }
 
 export interface Place { name: string; lat: number; lng: number; }

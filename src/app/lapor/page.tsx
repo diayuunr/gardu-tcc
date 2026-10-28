@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import Reveal from '@/components/Reveal';
 import { PLACES } from '@/lib/gazetteer';
+import { BACKEND_URL, readErrorDetail } from '@/lib/api';
 
 const INCIDENT_TYPES = [
   'Pencurian dengan kekerasan',
@@ -83,239 +84,45 @@ export default function LaporPage() {
     setPhase('sending');
 
     try {
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL ||
-        'http://localhost:8000';
+      // Verifikasi AI berjalan otomatis di background backend setelah
+      // laporan tersimpan, jadi cukup satu panggilan ke POST /reports.
+      // Backend belum punya field jenis kejadian, jadi dilampirkan di
+      // awal deskripsi agar tetap terbaca oleh verifikator.
+      const response = await fetch(`${BACKEND_URL}/reports`, {
+        method: 'POST',
 
-      /*
-       * =====================================================
-       * STEP 1
-       * Kirim laporan ke Backend
-       *
-       * POST /reports
-       *
-       * Backend menerima:
-       * {
-       *   description,
-       *   location,
-       *   reported_at
-       * }
-       * =====================================================
-       */
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
 
-      const reportResponse = await fetch(
-        `${backendUrl}/reports`,
-        {
-          method: 'POST',
+        body: JSON.stringify({
+          description: `Jenis kejadian: ${incidentType}. ${description.trim()}`,
+          location_text: locationText.trim(),
 
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
+          // Instan absolut (UTC) dari waktu lokal yang dipilih. Tanpa
+          // zona waktu, backend menganggapnya UTC dan menolak waktu
+          // "sekarang" sebagai masa depan.
+          occurred_at: new Date(occurredAt).toISOString(),
+        }),
+      });
 
-          body: JSON.stringify({
-            description:
-              description.trim(),
-
-            location:
-              locationText.trim(),
-
-            /*
-             * Jangan menggunakan toISOString()
-             * agar waktu lokal yang dipilih user
-             * tidak bergeser ke UTC.
-             *
-             * Contoh:
-             * 2026-09-20T00:00
-             *
-             * dikirim sebagai:
-             * 2026-09-20T00:00:00
-             */
-
-            reported_at:
-              `${occurredAt}:00`,
-          }),
-        }
-      );
-
-      /*
-       * Cek apakah pembuatan laporan berhasil
-       */
-
-      if (!reportResponse.ok) {
-        let detail =
-          'Gagal mengirim laporan.';
-
-        try {
-          const errorData =
-            await reportResponse.json();
-
-          if (errorData?.detail) {
-            detail =
-              errorData.detail;
-          }
-        } catch {
-          // Abaikan jika response bukan JSON
-        }
-
-        throw new Error(detail);
-      }
-
-      /*
-       * Response dari:
-       * POST /reports
-       *
-       * {
-       *   "id": "...",
-       *   "status": "menunggu_verifikasi"
-       * }
-       */
-
-      const reportData =
-        await reportResponse.json();
-
-      console.log(
-        '=== REPORT CREATED ==='
-      );
-
-      console.log(reportData);
-
-      const reportId =
-        reportData.id;
-
-      /*
-       * Pastikan ID laporan tersedia
-       */
-
-      if (!reportId) {
+      if (!response.ok) {
         throw new Error(
-          'Laporan berhasil dikirim tetapi ID laporan tidak diterima dari server.'
+          await readErrorDetail(response, 'Gagal mengirim laporan.'),
         );
       }
-
-      /*
-       * =====================================================
-       * STEP 2
-       * Kirim laporan ke Verification Agent
-       *
-       * POST /agents/verify
-       *
-       * Backend menerima:
-       * {
-       *   report_id,
-       *   text
-       * }
-       * =====================================================
-       *
-       * Kita gabungkan jenis kejadian + deskripsi
-       * supaya Verification Agent mendapatkan konteks
-       * jenis kejadian yang dipilih user.
-       */
-
-      const verificationText =
-        `Jenis kejadian: ${incidentType}. ` +
-        `Deskripsi: ${description.trim()}`;
-
-      const verifyResponse =
-        await fetch(
-          `${backendUrl}/agents/verify`,
-          {
-            method: 'POST',
-
-            headers: {
-              'Content-Type':
-                'application/json',
-
-              Accept:
-                'application/json',
-            },
-
-            body: JSON.stringify({
-              report_id:
-                reportId,
-
-              text:
-                verificationText,
-            }),
-          }
-        );
-
-      /*
-       * Verification bisa gagal sementara
-       * (misalnya Gemini/API sedang bermasalah).
-       *
-       * Laporan sebenarnya sudah tersimpan,
-       * sehingga jangan menghapus laporan.
-       */
-
-      if (!verifyResponse.ok) {
-        const verifyDetail =
-          'Laporan berhasil dikirim dan menunggu verifikasi.';
-
-        try {
-          const errorData =
-            await verifyResponse.json();
-
-          if (errorData?.detail) {
-            console.error(
-              'Verification error:',
-              errorData.detail
-            );
-          }
-        } catch {
-          // Abaikan jika response bukan JSON
-        }
-
-        console.warn(
-          'Laporan tersimpan, tetapi verifikasi belum berhasil.'
-        );
-
-        setSuccessMessage(
-          verifyDetail
-        );
-
-        setPhase('done');
-
-        return;
-      }
-
-      /*
-       * Response Verification Agent
-       */
-
-      const verificationData =
-        await verifyResponse.json();
-
-      console.log(
-        '=== VERIFICATION RESPONSE ==='
-      );
-
-      console.log(
-        verificationData
-      );
-
-      /*
-       * =====================================================
-       * SELESAI
-       * =====================================================
-       */
 
       setSuccessMessage(
-        'Laporan berhasil dikirim dan telah masuk proses verifikasi AI.'
+        'Laporan berhasil dikirim dan akan diverifikasi secara otomatis.',
       );
 
       setPhase('done');
-
     } catch (err) {
-      console.error(
-        '=== REPORT ERROR ===',
-        err
-      );
-
       setError(
         err instanceof Error
           ? err.message
-          : 'Terjadi kesalahan saat mengirim laporan.'
+          : 'Terjadi kesalahan saat mengirim laporan.',
       );
 
       setPhase('form');
@@ -655,9 +462,9 @@ export default function LaporPage() {
 
                   {/* INFO */}
                   <p className="text-center text-xs text-zinc-600">
-                    Laporan akan disimpan oleh
-                    server dan diproses melalui
-                    Verification Agent.
+                    Laporan disimpan oleh server dan
+                    diverifikasi otomatis di latar
+                    belakang.
                   </p>
 
                 </motion.form>

@@ -7,8 +7,38 @@ import Reveal from '@/components/Reveal';
 import RiskBadge from '@/components/RiskBadge';
 
 import { PLACES } from '@/lib/gazetteer';
-import { Place, RouteResult, LEVEL_STYLE } from '@/lib/types';
-import { supabase, isMockMode } from '@/lib/supabase';
+import { Place, RouteResult, FlaggedArea, LEVEL_STYLE } from '@/lib/types';
+import {
+  BACKEND_URL,
+  BackendRiskLevel,
+  readErrorDetail,
+} from '@/lib/api';
+
+const GPS_LABEL = 'Lokasi saya (GPS)';
+
+type BackendPoint = { place_name: string | null };
+
+type BackendRouteCheck = {
+  risk_level: 'aman' | 'waspada' | 'berisiko_tinggi';
+  max_risk_score: number;
+  areas_to_avoid: (FlaggedArea & { risk_level: BackendRiskLevel })[];
+  areas_to_watch: (FlaggedArea & { risk_level: BackendRiskLevel })[];
+  areas_checked: number;
+  areas_with_data: number;
+  origin: BackendPoint;
+  destination: BackendPoint;
+  distance_km: number;
+  duration_minutes: number;
+};
+
+// Titik GPS dikirim sebagai koordinat, area pilihan sebagai teks.
+function toPlaceInput(place: Place) {
+  if (place.name === GPS_LABEL) {
+    return { latitude: place.lat, longitude: place.lng };
+  }
+
+  return { text: place.name };
+}
 
 function Gauge({
   score,
@@ -21,7 +51,7 @@ function Gauge({
 
   const r = 74;
   const circumference = Math.PI * r;
-  const filled = (Math.min(score, 100) / 100) * circumference;
+  const filled = (Math.min(score, 10) / 10) * circumference;
 
   return (
     <div className="relative mx-auto h-32 w-48">
@@ -60,7 +90,7 @@ function Gauge({
           className="font-display text-4xl font-bold"
           style={{ color: style.hex }}
         >
-          {score.toFixed(0)}
+          {score.toFixed(1)}
         </motion.p>
       </div>
     </div>
@@ -116,7 +146,7 @@ export default function RutePage() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setOrigin({
-          name: 'Lokasi saya (GPS)',
+          name: GPS_LABEL,
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
         });
@@ -140,204 +170,51 @@ export default function RutePage() {
     setErrorMsg('');
 
     try {
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL ||
-        'http://localhost:8000';
+      const response = await fetch(`${BACKEND_URL}/route/check`, {
+        method: 'POST',
 
-      /*
-       * Backend membutuhkan:
-       *
-       * {
-       *   origin: string,
-       *   destination: string,
-       *   departure_time: ISO 8601
-       * }
-       */
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
 
-      const departureDate = new Date(departAt);
+        body: JSON.stringify({
+          origin: toPlaceInput(origin),
+          destination: toPlaceInput(dest),
 
-      const response = await fetch(
-        `${backendUrl}/agents/route-check`,
-        {
-          method: 'POST',
+          // Tanpa zona waktu, backend menganggapnya WIB.
+          departure_time: new Date(departAt).toISOString(),
+        }),
+      });
 
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-
-          body: JSON.stringify({
-            origin: origin.name,
-            destination: dest.name,
-
-            // Backend menerima ISO 8601
-            departure_time: `${departAt}:00`,
-          }),
-        }
-      );
-
-      /*
-       * Kalau BE mengembalikan HTTP error
-       */
       if (!response.ok) {
-        let detail = 'Gagal memeriksa rute.';
-
-        try {
-          const errorData = await response.json();
-
-          if (errorData?.detail) {
-            detail = errorData.detail;
-          }
-        } catch {
-          // ignore JSON parsing error
-        }
-
-        throw new Error(detail);
+        throw new Error(
+          await readErrorDetail(response, 'Gagal memeriksa rute.'),
+        );
       }
 
-      /*
-       * Response asli dari BE:
-       *
-       * {
-       *   "risk_level": "berisiko_tinggi",
-       *   "avoid_areas": ["Bantul"]
-       * }
-       */
+      const data: BackendRouteCheck = await response.json();
 
-      const data = await response.json();
-
-      console.log(
-        '=== SAFE ROUTE ADVISOR RESPONSE ==='
-      );
-
-      console.log(data);
-
-      /*
-       * Mapping status BE → status yang dipakai UI
-       *
-       * BE:
-       * berisiko_tinggi
-       * waspada
-       * aman
-       *
-       * UI:
-       * rawan
-       * waspada
-       * aman
-       */
-
-      let status: 'aman' | 'waspada' | 'rawan';
-
-      if (data.risk_level === 'berisiko_tinggi') {
-        status = 'rawan';
-      } else if (data.risk_level === 'waspada') {
-        status = 'waspada';
-      } else {
-        status = 'aman';
-      }
-
-      /*
-       * Karena BE saat ini belum mengirim score,
-       * kita menggunakan representasi visual:
-       *
-       * aman    = 0
-       * waspada = 50
-       * rawan   = 90
-       *
-       * Ini hanya untuk Gauge UI.
-       */
-
-      let displayScore = 0;
-
-      if (status === 'waspada') {
-        displayScore = 50;
-      }
-
-      if (status === 'rawan') {
-        displayScore = 90;
-      }
-
-      /*
-       * avoid_areas dari BE:
-       *
-       * ["Bantul"]
-       *
-       * diubah menjadi format hotspots
-       * yang digunakan UI.
-       */
-
-      const avoidAreas: string[] = Array.isArray(
-        data.avoid_areas
-      )
-        ? data.avoid_areas
-        : [];
-
-      const hotspots = avoidAreas.map(
-        (area: string) => ({
-          name: area,
-          score: displayScore,
-        })
-      );
-
-      /*
-       * checkedSamples:
-       *
-       * BE belum mengirim jumlah titik.
-       * Untuk sementara kita gunakan jumlah
-       * area yang terdeteksi.
-       */
-
-      const routeResult: RouteResult = {
-        status,
-        maxScore: displayScore,
-
-        checkedSamples:
-          avoidAreas.length,
-
-        hotspots,
-      };
-
-      console.log(
-        '=== FRONTEND ROUTE RESULT ==='
-      );
-
-      console.log(routeResult);
-
-      setResult(routeResult);
-
-      /*
-       * Simpan hasil pengecekan ke Supabase
-       */
-      if (!isMockMode && supabase) {
-        supabase
-          .from('route_checks')
-          .insert({
-            origin_text: origin.name,
-            destination_text: dest.name,
-            depart_at: departureDate.toISOString(),
-
-            // Simpan response asli BE
-            result: data,
-          })
-          .then(({ error }) => {
-            if (error) {
-              console.error(
-                'Gagal menyimpan route check:',
-                error
-              );
-            }
-          });
-      }
+      setResult({
+        status:
+          data.risk_level === 'berisiko_tinggi'
+            ? 'rawan'
+            : data.risk_level,
+        maxScore: Number(data.max_risk_score),
+        avoid: data.areas_to_avoid,
+        watch: data.areas_to_watch,
+        areasChecked: data.areas_checked,
+        areasWithData: data.areas_with_data,
+        distanceKm: data.distance_km,
+        durationMinutes: data.duration_minutes,
+        originName: data.origin.place_name,
+        destinationName: data.destination.place_name,
+      });
     } catch (error) {
-      console.error(
-        '=== ROUTE CHECK ERROR ===',
-        error
-      );
-
       setErrorMsg(
         error instanceof Error
           ? error.message
-          : 'Terjadi kesalahan saat memeriksa rute.'
+          : 'Terjadi kesalahan saat memeriksa rute.',
       );
     } finally {
       setChecking(false);
@@ -411,7 +288,7 @@ export default function RutePage() {
                   </option>
                 ))}
 
-                {origin.name === 'Lokasi saya (GPS)' && (
+                {origin.name === GPS_LABEL && (
                   <option value={origin.name}>
                     {origin.name}
                   </option>
@@ -618,22 +495,56 @@ export default function RutePage() {
 
                   </div>
 
-                  {/* AVOID AREAS */}
-                  {result.hotspots.length > 0 && (
+                  {/* RINGKASAN RUTE */}
+                  <p className="mt-4 text-center text-xs text-zinc-500">
+                    {result.distanceKm.toFixed(1)} km •{' '}
+                    {result.durationMinutes} menit
+                    {result.originName && result.destinationName
+                      ? ` • ${result.originName} → ${result.destinationName}`
+                      : ''}
+                  </p>
+
+                  {/* AREA DIHINDARI */}
+                  {result.avoid.length > 0 && (
                     <div className="mt-8">
 
                       <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                        Area yang terdeteksi berisiko
+                        Area yang sebaiknya dihindari
                       </p>
 
                       <div className="mt-3 flex flex-wrap gap-2">
 
-                        {result.hotspots.map((h) => (
+                        {result.avoid.map((a) => (
                           <span
-                            key={h.name}
+                            key={`${a.area_name}-avoid`}
                             className="rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1.5 text-xs text-red-300"
                           >
-                            {h.name}
+                            {a.place_name ?? a.area_name} •{' '}
+                            {a.risk_score.toFixed(1)}
+                          </span>
+                        ))}
+
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AREA WASPADA */}
+                  {result.watch.length > 0 && (
+                    <div className="mt-6">
+
+                      <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+                        Area yang perlu diwaspadai
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+
+                        {result.watch.map((a) => (
+                          <span
+                            key={`${a.area_name}-watch`}
+                            className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs text-amber-300"
+                          >
+                            {a.place_name ?? a.area_name} •{' '}
+                            {a.risk_score.toFixed(1)}
                           </span>
                         ))}
 
@@ -642,14 +553,21 @@ export default function RutePage() {
                   )}
 
                   {/* AMAN */}
-                  {result.hotspots.length === 0 && (
-                    <div className="mt-8 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4 text-center">
-                      <p className="text-sm text-emerald-300">
-                        Tidak ada area berisiko yang
-                        terdeteksi pada rute ini.
-                      </p>
-                    </div>
-                  )}
+                  {result.avoid.length === 0 &&
+                    result.watch.length === 0 && (
+                      <div className="mt-8 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4 text-center">
+                        <p className="text-sm text-emerald-300">
+                          Tidak ada area berisiko yang tercatat pada
+                          rute ini.
+                        </p>
+
+                        <p className="mt-1 text-xs text-zinc-500">
+                          Data tersedia untuk {result.areasWithData} dari{' '}
+                          {result.areasChecked} area yang dilintasi. Ini
+                          bukan jaminan aman.
+                        </p>
+                      </div>
+                    )}
 
                   {/* SUGGESTIONS */}
                   <div className="mt-8">

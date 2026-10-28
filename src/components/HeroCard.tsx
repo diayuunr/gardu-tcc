@@ -3,64 +3,25 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import RiskBadge from '@/components/RiskBadge';
+import { BACKEND_URL, BackendRiskLevel, readErrorDetail, toUiLevel } from '@/lib/api';
 
 type RiskResponse = {
-  area: string;
-  time_slot: string;
-  score: number;
+  area_name: string;
+  time_bucket: string;
+  risk_score: number;
+  risk_level: BackendRiskLevel;
+  contributing_incident_count: number;
+  has_data: boolean;
 };
-
-type RiskLevel = 'aman' | 'waspada' | 'rawan';
-
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 // ===============================
 // KONFIGURASI KAWASAN
 // ===============================
-// Ganti dengan kawasan yang ingin
-// ditampilkan pada HeroCard.
+// Titik yang ditanyakan ke GET /risk/score.
+// Backend memetakannya ke sel grid ~1 km.
 const TARGET_AREA = 'Kota Yogyakarta';
-
-// ===============================
-// MENENTUKAN TIME SLOT
-// ===============================
-function getTimeSlot(): string {
-  const hour = new Date().getHours();
-
-  if (hour >= 0 && hour < 6) {
-    return 'dini_hari';
-  }
-
-  if (hour >= 6 && hour < 12) {
-    return 'pagi';
-  }
-
-  if (hour >= 12 && hour < 15) {
-    return 'siang';
-  }
-
-  if (hour >= 15 && hour < 18) {
-    return 'sore';
-  }
-
-  return 'malam';
-}
-
-// ===============================
-// MENENTUKAN LEVEL RISIKO
-// ===============================
-function getRiskLevel(score: number): RiskLevel {
-  if (score >= 70) {
-    return 'rawan';
-  }
-
-  if (score >= 40) {
-    return 'waspada';
-  }
-
-  return 'aman';
-}
+const TARGET_LAT = -7.7956;
+const TARGET_LON = 110.3695;
 
 // ===============================
 // LABEL TIME SLOT
@@ -97,12 +58,8 @@ export default function HeroCard() {
       setLoading(true);
       setError(null);
 
-      const timeSlot = getTimeSlot();
-
       const response = await fetch(
-        `${BACKEND_URL}/agents/risk?area=${encodeURIComponent(
-          TARGET_AREA,
-        )}&time_slot=${encodeURIComponent(timeSlot)}`,
+        `${BACKEND_URL}/risk/score?lat=${TARGET_LAT}&lon=${TARGET_LON}`,
         {
           method: 'GET',
           headers: {
@@ -114,7 +71,10 @@ export default function HeroCard() {
 
       if (!response.ok) {
         throw new Error(
-          `Backend mengembalikan status ${response.status}`,
+          await readErrorDetail(
+            response,
+            `Backend mengembalikan status ${response.status}`,
+          ),
         );
       }
 
@@ -197,7 +157,7 @@ export default function HeroCard() {
   // ERROR STATE
   // ===============================
 
-  if (error || !risk) {
+  if (error || !risk || !risk.has_data) {
     return (
       <div className="glass-card animate-floaty p-6 shadow-glow">
         <div className="flex items-center justify-between">
@@ -215,8 +175,9 @@ export default function HeroCard() {
         </p>
 
         <p className="mt-3 text-xs leading-relaxed text-zinc-500">
-          Risk Prediction Agent belum dapat memberikan skor
-          untuk kawasan {TARGET_AREA}.
+          {error
+            ? `Risk Prediction Agent belum dapat memberikan skor untuk kawasan ${TARGET_AREA}.`
+            : `Belum ada data kerawanan tercatat untuk kawasan ${TARGET_AREA} pada jam ini. Ini bukan jaminan aman.`}
         </p>
 
         <button
@@ -236,13 +197,13 @@ export default function HeroCard() {
 
   const score = Math.max(
     0,
-    Math.min(100, Number(risk.score)),
+    Math.min(10, Number(risk.risk_score)),
   );
 
-  const level = getRiskLevel(score);
+  const level = toUiLevel(risk.risk_level);
 
   const timeLabel = getTimeSlotLabel(
-    risk.time_slot,
+    risk.time_bucket,
   );
 
   const isHighRisk = level === 'rawan';
@@ -280,7 +241,7 @@ export default function HeroCard() {
 
       {/* AREA */}
       <p className="mt-3 font-display text-2xl font-bold text-white">
-        {risk.area}
+        {TARGET_AREA}
       </p>
 
       {/* SCORE */}
@@ -307,7 +268,7 @@ export default function HeroCard() {
             ease: [0.22, 1, 0.36, 1],
           }}
         >
-          {Math.round(score)}
+          {score.toFixed(1)}
         </motion.span>
 
         <div className="pb-1.5">
@@ -320,7 +281,7 @@ export default function HeroCard() {
         <motion.div
           initial={{ width: 0 }}
           animate={{
-            width: `${score}%`,
+            width: `${score * 10}%`,
           }}
           transition={{
             duration: 1.3,
@@ -333,7 +294,7 @@ export default function HeroCard() {
 
       {/* DESCRIPTION */}
       <p className="mt-4 text-xs leading-relaxed text-zinc-500">
-        Skor prediktif per jam, diperbarui oleh Risk
+        Skor prediktif 0–10 per jam, diperbarui oleh Risk
         Prediction Agent.
       </p>
 
@@ -344,7 +305,7 @@ export default function HeroCard() {
         </span>
 
         <span className="text-[10px] text-zinc-600">
-          {risk.time_slot}
+          {risk.time_bucket}
         </span>
       </div>
     </div>

@@ -54,7 +54,7 @@ const AGENTS = [
   {
     name: 'Risk Prediction Agent',
     role: 'Skor kerawanan per area & jam',
-    desc: 'Mengagregasi seed data dan laporan terverifikasi menjadi skor 0-100 per area/jam, dengan koreksi pola musiman seperti lonjakan menjelang Ramadan.',
+    desc: 'Mengagregasi seed data dan laporan terverifikasi menjadi skor 0-10 per area/jam, dengan koreksi pola musiman seperti lonjakan menjelang Ramadan.',
     tag: 'Seed data + komunitas',
   },
   {
@@ -90,42 +90,25 @@ const STEPS = [
 
 export default async function LandingPage() {
   const supabase = await createClient();
-  const { data, error } = await supabase
-  .from('reports')
-  .select('*')
-  .limit(5);
+  const [{ count: totalReports }, { data: riskRows }] =
+    await Promise.all([
+      supabase
+        .from('reports')
+        .select('*', {
+          count: 'exact',
+          head: true,
+        }),
 
-  console.log('SUPABASE DATA:', data);
-  console.log('SUPABASE ERROR:', error);
-
-  const [
-    { count: totalReports, error: reportsError },
-    { data: riskRows, error: riskError },
-  ] = await Promise.all([
-    supabase
-      .from('reports')
-      .select('*', {
-        count: 'exact',
-        head: true,
-      }),
-
-    supabase
-      .from('risk_scores')
-      .select('area'),
-  ]);
-
-  console.log('TOTAL REPORTS:', totalReports);
-  console.log('RISK ROWS:', riskRows);
-  console.log('REPORT ERROR:', reportsError);
-  console.log('RISK ERROR:', riskError);
+      supabase
+        .from('risk_scores')
+        .select('area_name'),
+    ]);
 
   const monitoredAreas = new Set(
     (riskRows ?? [])
-      .map((row) => row.area)
+      .map((row) => row.area_name)
       .filter(Boolean),
   ).size;
-
-  console.log('MONITORED AREAS:', monitoredAreas);
 
   const riskPredictions = riskRows?.length ?? 0;
 
@@ -220,7 +203,7 @@ export default async function LandingPage() {
                     l: 'Laporan total',
                   },
                   {
-                    v: `${monitoredAreas ?? 0}+`,
+                    v: `${monitoredAreas}+`,
                     l: 'Area terpantau',
                   },
                   {
