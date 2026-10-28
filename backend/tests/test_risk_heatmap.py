@@ -96,7 +96,8 @@ def test_returns_only_cells_of_the_requested_bucket_sorted_by_score_with_no_iden
     assert body["time_bucket"] == "malam"
     assert [cell["risk_score"] for cell in body["cells"]] == [6.32, 4.17]  # urut skor tertinggi
     assert set(body["cells"][0]) == {  # REQ-F-042: hanya label area netral, pusat sel, dan angka agregat
-        "area_name", "latitude", "longitude", "risk_score", "risk_level", "contributing_incident_count",
+        "area_name", "place_name", "label", "latitude", "longitude", "risk_score", "risk_level",
+        "contributing_incident_count",
     }
     assert body["updated_at"].startswith("2026-09-20T06:30")  # perhitungan terbaru di antara sel
     assert response.headers["cache-control"] == "public, max-age=30"

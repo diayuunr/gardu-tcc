@@ -111,7 +111,7 @@ export default function SumberDayaPage() {
     /^[\d()+\-\s]+$/.test(contact);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-black via-[#0b2924] to-[#102f35] pb-20 pt-28 text-white">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-black via-[#0b2924] to-[#102f35] pb-20 pt-28 text-white">
       {/* Background glow */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-32 top-20 h-80 w-80 rounded-full bg-emerald-500/10 blur-[100px]" />
@@ -516,6 +516,6 @@ export default function SumberDayaPage() {
           </div>
         </Reveal>
       </div>
-    </main>
+    </div>
   );
 }

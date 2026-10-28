@@ -1,61 +1,12 @@
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import HeroCard from '@/components/HeroCard';
-import { createClient } from '@/lib/supabase/server';
-import CountUp from '@/components/CountUp';
+import LandingStats from '@/components/LandingStats';
 import { FeaturesSection } from '@/components/FeaturesSection';
 import AgentsSections from '@/components/AgentsSections';
 import HowItWorksSection from '@/components/StepsSection';
 
-export const dynamic = 'force-dynamic';
-
-const STEPS = [
-  {
-    n: '01',
-    title: 'Warga melapor',
-    desc: 'Isi formulir singkat: lokasi, waktu, deskripsi. Sepenuhnya anonim.',
-  },
-  {
-    n: '02',
-    title: 'AI memverifikasi',
-    desc: 'Entitas diekstrak, laporan diklasterkan, duplikat ditandai.',
-  },
-  {
-    n: '03',
-    title: 'Skor diperbarui',
-    desc: 'Insiden terverifikasi menaikkan skor kerawanan area & jam terkait.',
-  },
-  {
-    n: '04',
-    title: 'Komunitas terlindungi',
-    desc: 'Peta publik dan Cek Rute memandu warga menjauhi zona rawan.',
-  },
-];
-
-export default async function LandingPage() {
-  const supabase = await createClient();
-  const [{ count: totalReports }, { data: riskRows }] =
-    await Promise.all([
-      supabase
-        .from('reports')
-        .select('*', {
-          count: 'exact',
-          head: true,
-        }),
-
-      supabase
-        .from('risk_scores')
-        .select('area_name'),
-    ]);
-
-  const monitoredAreas = new Set(
-    (riskRows ?? [])
-      .map((row) => row.area_name)
-      .filter(Boolean),
-  ).size;
-
-  const riskPredictions = riskRows?.length ?? 0;
-
+export default function LandingPage() {
   return (
     <div>
       {/* HERO */}
@@ -97,7 +48,7 @@ export default async function LandingPage() {
             </Reveal>
 
             <Reveal delay={0.2}>
-              <p className="mt-6 max-w-xl text-md leading-relaxed text-zinc-400">
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-zinc-400">
                 Gardu membantu warga dan mahasiswa lebih waspada saat beraktivitas di <br></br>D. I. Yogyakarta, mulai dari melaporkan kejadian secara anonim, mengenali area rawan, hingga memeriksa kondisi rute sebelum berangkat.
               </p>
             </Reveal>
@@ -140,32 +91,7 @@ export default async function LandingPage() {
             </Reveal>
 
             <Reveal delay={0.4}>
-              <div className="mt-12 grid max-w-lg grid-cols-3 divide-x divide-line rounded-3xl border border-line bg-panel/50 backdrop-blur">
-                {[
-                  {
-                    v: totalReports ?? 0,
-                    l: 'Laporan total',
-                  },
-                  {
-                    v: monitoredAreas ?? 0,
-                    l: 'Area terpantau',
-                  },
-                  {
-                    v: riskPredictions ?? 0,
-                    l: 'Prediksi Risiko',
-                  },
-                ].map((s, i) => (
-                  <div key={s.l} className="px-5 py-4">
-                    <p className="font-display text-2xl font-bold text-emerald-300">
-                      <CountUp value={s.v} suffix="+" />
-                    </p>
-
-                    <p className="mt-1 text-[11px] leading-snug text-zinc-500">
-                      {s.l}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              <LandingStats />
             </Reveal>
           </div>
 

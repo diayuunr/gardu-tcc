@@ -36,6 +36,7 @@ def generate_embedding(text: str) -> list[float] | None:
         embeddings_client = GoogleGenerativeAIEmbeddings(
             model=EMBEDDING_MODEL,
             google_api_key=settings.gemini_api_key,
+            request_options={"timeout": settings.gemini_timeout_seconds},
         )
         vector = embeddings_client.embed_query(text, output_dimensionality=EMBEDDING_DIMENSIONS)
     except Exception as exc:  # noqa: BLE001 - semua error panggilan AI wajib ditangani eksplisit

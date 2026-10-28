@@ -88,3 +88,32 @@ def test_unknown_error_keeps_type_and_code_location_but_not_message():
     # Tetap bisa dilacak: nama file & fungsi tempat error dilempar.
     assert "test_safe_log.py" in summary
     assert "_summary_of" in summary
+
+
+# ------------------------------------------------------------ log akses uvicorn (privasi)
+
+
+def test_uvicorn_access_log_drops_client_ip_and_query_string_but_keeps_the_rest():
+    import logging
+
+    from app.core.safe_log import _RedactAccessLog
+
+    record = logging.LogRecord(
+        "uvicorn.access", logging.INFO, __file__, 1, '%s - "%s %s HTTP/%s" %d',
+        ("203.0.113.9:51234", "GET", "/geo/reverse?lat=-7.7702&lon=110.3902", "1.1", 200), None,
+    )
+
+    assert _RedactAccessLog().filter(record) is True
+    line = record.getMessage()
+    assert line == '- - "GET /geo/reverse HTTP/1.1" 200'
+    assert "203.0.113.9" not in line and "-7.77" not in line and "110.39" not in line
+
+
+def test_main_installs_the_access_log_filter_and_silences_httpx_request_logs():
+    import logging
+
+    import app.main  # noqa: F401 - import memasang pengaman
+    from app.core.safe_log import _RedactAccessLog
+
+    assert any(isinstance(f, _RedactAccessLog) for f in logging.getLogger("uvicorn.access").filters)
+    assert logging.getLogger("httpx").level == logging.WARNING  # INFO httpx = URL lengkap termasuk token & kata kunci

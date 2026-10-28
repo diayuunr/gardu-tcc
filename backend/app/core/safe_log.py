@@ -30,6 +30,34 @@ def silence_library_retry_logs() -> None:
         library_logger.addFilter(_DropLibraryRetryLogs())
 
 
+class _RedactAccessLog(logging.Filter):
+    """Samarkan log akses uvicorn: buang IP klien dan QUERY STRING dari baris log.
+
+    Bentuk asli: `1.2.3.4:5678 - "GET /geo/reverse?lat=-7.77&lon=110.39 HTTP/1.1" 200`. Query string memuat
+    koordinat GPS pengguna (`/geo/reverse`, `/risk/score`) dan kata kunci pencarian (`/geo/search`), dan IP
+    adalah data pribadi — keduanya tidak boleh ada di log (REQ-NF-120/121). Yang tersisa: metode, path,
+    versi HTTP, dan status (cukup untuk operasional).
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        args = record.args
+        if isinstance(args, tuple) and len(args) == 5:
+            _client, method, full_path, http_version, status_code = args
+            record.args = ("-", method, str(full_path).split("?", 1)[0], http_version, status_code)
+        return True
+
+
+def harden_logging() -> None:
+    """Pasang pengaman log tingkat aplikasi (aman dipanggil berulang): redaksi log akses uvicorn, dan
+    kunci logger httpx/httpcore ke WARNING (di level INFO httpx mencatat URL lengkap permintaan keluar —
+    termasuk `access_token` Mapbox dan kata kunci pengguna)."""
+    access_logger = logging.getLogger("uvicorn.access")
+    if not any(isinstance(f, _RedactAccessLog) for f in access_logger.filters):
+        access_logger.addFilter(_RedactAccessLog())
+    for name in ("httpx", "httpcore"):
+        logging.getLogger(name).setLevel(logging.WARNING)
+
+
 def _origin_of(exc: BaseException) -> str | None:
     """Lokasi kode (file:baris, fungsi) tempat error muncul — aman karena
     hanya nama file/baris/fungsi, tanpa isi variabel maupun isi pesan."""

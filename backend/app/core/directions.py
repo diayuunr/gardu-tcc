@@ -25,6 +25,17 @@ class RouteServiceUnavailable(Exception):
 
 
 @dataclass(frozen=True)
+class RouteStep:
+    """Satu langkah navigasi Mapbox: nama jalan, jarak, durasi, dan geometri (lintang, bujur).
+    Hanya dipakai untuk menamai jalan yang dilalui — bukan navigasi turn-by-turn (di luar cakupan SRS)."""
+
+    name: str
+    distance_m: float
+    duration_s: float
+    points: tuple[tuple[float, float], ...]
+
+
+@dataclass(frozen=True)
 class RouteGeometry:
     """Rute hasil Mapbox: titik-titik (lintang, bujur) berurutan, jarak, dan durasi.
 
@@ -35,6 +46,7 @@ class RouteGeometry:
     distance_m: float
     duration_s: float
     alternatives: tuple["RouteGeometry", ...] = ()
+    steps: tuple[RouteStep, ...] = ()  # kosong bila Mapbox tak memberi langkah / langkahnya rusak
 
 
 def fetch_route(
@@ -64,6 +76,7 @@ def fetch_route(
                 "access_token": settings.mapbox_token,
                 "geometries": "geojson",
                 "overview": "full",
+                "steps": "true",  # nama jalan per langkah
                 "alternatives": "true" if max_alternatives > 0 else "false",
             },
             timeout=_DIRECTIONS_TIMEOUT_SECONDS,
@@ -113,4 +126,29 @@ def _parse_route(route: dict) -> RouteGeometry:
         logger.warning("Geometri rute dari Directions tidak valid (titik=%d)", len(points))
         raise RouteServiceUnavailable("geometri rute tidak valid")
 
-    return RouteGeometry(points=points, distance_m=distance_m, duration_s=max(0.0, duration_s))
+    return RouteGeometry(
+        points=points, distance_m=distance_m, duration_s=max(0.0, duration_s), steps=_parse_steps(route)
+    )
+
+
+def _parse_steps(route: dict) -> tuple[RouteStep, ...]:
+    """Langkah-langkah rute (nama jalan + geometri). Langkah tanpa panjang (mis. "arrive") dibuang.
+    Bila ada langkah yang bentuknya rusak, SEMUA langkah dibuang (rute tetap valid, dinilai sebagai satu
+    jalur tanpa nama) — lebih baik tanpa nama daripada nama yang salah tempat."""
+    steps: list[RouteStep] = []
+    try:
+        for leg in route.get("legs") or []:
+            for raw in leg.get("steps") or []:
+                points = tuple((float(lat), float(lon)) for lon, lat in raw["geometry"]["coordinates"])
+                distance_m, duration_s = float(raw["distance"]), float(raw["duration"])
+                if not all(math.isfinite(v) for p in points for v in p) or not (
+                    math.isfinite(distance_m) and math.isfinite(duration_s)
+                ):
+                    raise ValueError("langkah tidak terbatas")
+                if distance_m <= 0 or len(points) < 2:
+                    continue
+                steps.append(RouteStep(str(raw.get("name") or "").strip(), distance_m, max(0.0, duration_s), points))
+    except (KeyError, TypeError, ValueError, AttributeError):
+        logger.warning("Langkah rute dari Directions tidak valid, nama jalan dilewati")
+        return ()
+    return tuple(steps)

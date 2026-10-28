@@ -43,7 +43,8 @@ _SYSTEM_PROMPT = (
     "- Pakai HANYA fakta yang diberikan. Jangan menambah angka, nama jalan/tempat, kronologi "
     "kejadian, atau penyebab lain yang tidak ada di fakta.\n"
     "- Sebut status rute persis seperti yang diberikan; jangan menilai ulang atau mengubahnya.\n"
-    "- Bila ada area yang disarankan dihindari, sebut nama areanya persis seperti diberikan. "
+    "- Bila ada ruas jalan yang disarankan dihindari, sebut namanya persis seperti diberikan (nama jalan dan "
+    "kecamatan). Jangan menyebut koordinat atau rincian kejadian individual. "
     "Boleh menyarankan mempertimbangkan waktu berangkat lain atau tetap waspada, tanpa "
     "menyebut jalan/jalur alternatif tertentu.\n"
     "- Sebut pengaruh musim (Ramadan) hanya bila ada di fakta; bila disebut, jelaskan bahwa skor area "
@@ -64,12 +65,12 @@ class RouteNarrativeFacts:
     route_level: str  # aman / waspada / berisiko_tinggi (keputusan deterministik)
     max_risk_score: float  # dibulatkan 1 desimal supaya cache tidak terlalu terpecah
     time_buckets: tuple[str, ...]  # bucket jam yang dilintasi, urut sepanjang rute
-    avoid_places: tuple[str, ...]  # nama area berisiko tinggi (tanpa duplikat)
-    watch_places: tuple[str, ...]  # nama area berisiko sedang (tanpa duplikat)
+    avoid_places: tuple[str, ...]  # nama ruas jalan (+kecamatan) berisiko tinggi (tanpa duplikat)
+    watch_places: tuple[str, ...]  # nama ruas jalan (+kecamatan) berisiko sedang (tanpa duplikat)
     distance_km: float
     duration_minutes: int
-    areas_checked: int
-    areas_with_data: int
+    areas_checked: int  # jumlah titik pemeriksaan di jalur
+    areas_with_data: int  # di antaranya yang punya data kejadian di sekitarnya
     season: str | None = None  # JELANG_RAMADAN / SELAMA_RAMADAN / None pada tanggal berangkat
 
 
@@ -95,10 +96,10 @@ def render_route_facts(facts: RouteNarrativeFacts) -> str:
             f"- Status rute: {facts.route_level.replace('_', ' ')}",
             f"- Skor kerawanan tertinggi di sepanjang rute: {facts.max_risk_score:.1f} dari 10",
             f"- Rentang waktu perjalanan: {', lalu '.join(_describe_time_bucket(b) for b in facts.time_buckets)}",
-            f"- Area yang disarankan dihindari (berisiko tinggi): {avoid}",
-            f"- Area yang perlu diwaspadai (berisiko sedang): {watch}",
+            f"- Ruas jalan yang disarankan dihindari (berisiko tinggi): {avoid}",
+            f"- Ruas jalan yang perlu diwaspadai (berisiko sedang): {watch}",
             f"- Jarak dan perkiraan durasi: {facts.distance_km:.1f} km, sekitar {facts.duration_minutes} menit",
-            f"- Cakupan data: skor tersedia untuk {facts.areas_with_data} dari {facts.areas_checked} area yang dilintasi",
+            f"- Cakupan data: ada data kejadian di sekitar {facts.areas_with_data} dari {facts.areas_checked} titik pemeriksaan di jalur",
             f"- Musim pada tanggal berangkat: {_describe_season(facts.season)}",
         ]
     )

@@ -6,11 +6,18 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from supabase import Client
 
-from app.agents.risk_agent import WIB, fetch_risk_cells, lookup_risk_score, time_bucket_of
+from app.agents.risk_agent import (
+    WIB,
+    fetch_risk_cells,
+    lookup_risk_score,
+    public_label,
+    summarize_by_kecamatan,
+    time_bucket_of,
+)
 from app.agents.risk_narrator import generate_risk_narrative
 from app.core.safe_log import safe_error_summary
 from app.core.supabase_client import get_supabase
-from app.schemas.risk import RiskCellOut, RiskHeatmapOut, RiskScoreOut, TimeBucket
+from app.schemas.risk import RegionRiskOut, RiskCellOut, RiskHeatmapOut, RiskScoreOut, RiskSummaryOut, TimeBucket
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +28,7 @@ router = APIRouter(prefix="/risk", tags=["risk"])
 _HEATMAP_CACHE_TTL_SECONDS = 60.0
 _heatmap_cache: dict[str, tuple[float, RiskHeatmapOut]] = {}
 _heatmap_cache_lock = threading.Lock()
+_summary_cache: dict[str, tuple[float, RiskSummaryOut]] = {}
 
 
 @router.get("/score", response_model=RiskScoreOut)
@@ -68,6 +76,8 @@ def get_risk_score(
 
     return RiskScoreOut(
         area_name=result.area_name,
+        place_name=result.place_name,
+        label=public_label(result.place_name, result.area_name),
         time_bucket=result.time_bucket,
         risk_score=result.risk_score,
         risk_level=result.risk_level,
@@ -119,6 +129,8 @@ def get_risk_heatmap(
         cells=[
             RiskCellOut(
                 area_name=cell.area_name,
+                place_name=cell.place_name,
+                label=public_label(cell.place_name, cell.area_name),
                 latitude=cell.latitude,
                 longitude=cell.longitude,
                 risk_score=cell.risk_score,
@@ -131,4 +143,62 @@ def get_risk_heatmap(
     )
     with _heatmap_cache_lock:
         _heatmap_cache[bucket] = (time.monotonic() + _HEATMAP_CACHE_TTL_SECONDS, result)
+    return result
+
+
+@router.get("/summary", response_model=RiskSummaryOut)
+def get_risk_summary(
+    response: Response,
+    time_bucket: TimeBucket | None = Query(
+        default=None,
+        description="Bucket jam WIB (dini_hari, pagi, siang, sore, malam). Default: bucket saat ini.",
+    ),
+    supabase: Client = Depends(get_supabase),
+) -> RiskSummaryOut:
+    """Ringkasan skor PER KECAMATAN untuk satu bucket jam, urut skor tertinggi — untuk daftar
+    "wilayah teratas" tanpa mengulang nama kecamatan yang sama per sel. Publik, tanpa login.
+
+    Tiap kecamatan: skor akhir tertinggi (sudah termasuk pengali musim) beserta levelnya, jumlah sel,
+    dan total insiden kontribusi. Tidak ada koordinat sel maupun data individu (REQ-F-042). Sel yang
+    belum punya kecamatan (belum dihitung ulang / terlalu jauh) tidak masuk daftar dan dihitung di
+    `unassigned_cell_count`. Di-cache singkat per bucket.
+    """
+    bucket = time_bucket or time_bucket_of(datetime.now(WIB))
+    response.headers["Cache-Control"] = "public, max-age=30"
+
+    with _heatmap_cache_lock:
+        cached = _summary_cache.get(bucket)
+    if cached and cached[0] > time.monotonic():
+        return cached[1]
+
+    try:
+        cells = fetch_risk_cells(supabase, bucket)
+    except Exception as exc:  # noqa: BLE001 - error database wajib ditangani eksplisit, bukan silent fail
+        logger.error("Gagal mengambil ringkasan kecamatan: %s", safe_error_summary(exc))
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Ringkasan kerawanan sementara tidak dapat diambil, silakan coba lagi.",
+        ) from exc
+
+    regions, unassigned = summarize_by_kecamatan(cells)
+    calculated_times = [cell.last_calculated_at for cell in cells if cell.last_calculated_at is not None]
+    result = RiskSummaryOut(
+        time_bucket=bucket,
+        regions=[
+            RegionRiskOut(
+                kecamatan_kode=region.kecamatan_kode,
+                place_name=region.place_name,
+                label=region.place_name,
+                risk_score=region.risk_score,
+                risk_level=region.risk_level,
+                cell_count=region.cell_count,
+                incident_count=region.incident_count,
+            )
+            for region in regions
+        ],
+        unassigned_cell_count=unassigned,
+        updated_at=max(calculated_times) if calculated_times else None,
+    )
+    with _heatmap_cache_lock:
+        _summary_cache[bucket] = (time.monotonic() + _HEATMAP_CACHE_TTL_SECONDS, result)
     return result

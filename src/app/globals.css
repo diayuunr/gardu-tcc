@@ -8,6 +8,94 @@
   --shadow-glow: 0 0 40px rgba(52, 211, 153, 0.12);
 
   --font-display: var(--font-jakarta), sans-serif;
+
+  --animate-blob: blob 18s ease-in-out infinite;
+  --animate-floaty: floaty 7s ease-in-out infinite;
+
+  @keyframes blob {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+      transform: translate(24px, -18px) scale(1.08);
+    }
+
+    66% {
+      transform: translate(-18px, 16px) scale(0.94);
+    }
+  }
+
+  @keyframes floaty {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+}
+
+/* Hormati prefers-reduced-motion (aksesibilitas): matikan animasi dekoratif. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-blob,
+  .animate-floaty,
+  .gardu-popup .mapboxgl-popup-content {
+  background: #0f1713;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: #e4e4e7;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+.gardu-popup.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip,
+.gardu-popup.mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip,
+.gardu-popup.mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip {
+  border-top-color: #0f1713;
+}
+
+.gardu-popup.mapboxgl-popup-anchor-top .mapboxgl-popup-tip,
+.gardu-popup.mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,
+.gardu-popup.mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip {
+  border-bottom-color: #0f1713;
+}
+
+.gardu-popup .mapboxgl-popup-close-button {
+  color: #a1a1aa;
+  font-size: 18px;
+  padding: 2px 8px;
+}
+
+.gardu-popup .mapboxgl-popup-close-button:hover {
+  background: transparent;
+  color: #f4f4f5;
+}
+
+/* Kontrol zoom Mapbox mengikuti tema gelap */
+.mapboxgl-ctrl-group {
+  background: #0f1713 !important;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.mapboxgl-ctrl-group button + button {
+  border-top: 1px solid rgba(148, 163, 184, 0.2) !important;
+}
+
+.mapboxgl-ctrl-group button .mapboxgl-ctrl-icon {
+  filter: invert(1);
+}
+
+.marquee-track {
+    animation: none !important;
+  }
 }
 
 html {
@@ -76,19 +164,6 @@ body {
   pointer-events: none;
   opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* Popup MapLibre mengikuti tema gelap */
-.gardu-popup .maplibregl-popup-content {
-  background: #0f1713;
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  border-radius: 14px;
-  padding: 10px 14px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-}
-
-.gardu-popup .maplibregl-popup-tip {
-  border-top-color: #0f1713;
 }
 
 .marquee-track {

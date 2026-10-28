@@ -44,7 +44,8 @@ _SYSTEM_PROMPT = (
     "Tugasmu HANYA menjelaskan mengapa skornya segitu berdasarkan fakta yang diberikan.\n"
     "Aturan:\n"
     "- Tulis 1-2 kalimat Bahasa Indonesia yang tenang dan informatif, tanpa nada menakut-nakuti.\n"
-    "- Pakai HANYA fakta yang diberikan. Jangan menambah angka, tanggal, nama tempat, "
+    "- Pakai HANYA fakta yang diberikan. Jangan menambah angka, tanggal, nama tempat (selain nama "
+    "wilayah yang diberikan, sebut persis), "
     "kronologi kejadian, atau penyebab lain yang tidak ada di fakta.\n"
     "- Jangan menghitung ulang atau mempertanyakan skor; sebut tingkat kerawanan persis "
     "seperti yang diberikan.\n"
@@ -67,6 +68,7 @@ class NarrativeFacts:
     incident_count: int
     season: str | None  # JELANG_RAMADAN / SELAMA_RAMADAN / None (di luar musim)
     season_multiplier: float  # pengali yang BENAR-BENAR diterapkan pada skor yang ditampilkan
+    place_name: str | None = None  # "Kec. X"; None = tak ada kecamatan dekat (nama tidak disebut)
 
 
 # ---------------------------------------------------------------- fungsi murni
@@ -83,6 +85,7 @@ def build_narrative_facts(lookup: RiskLookup, settings: Settings) -> NarrativeFa
         incident_count=lookup.contributing_incident_count,
         season=lookup.season,
         season_multiplier=lookup.season_multiplier,
+        place_name=lookup.place_name,
     )
 
 
@@ -112,8 +115,10 @@ def _describe_incident_count(count: int) -> str:
 def render_facts(facts: NarrativeFacts) -> str:
     """Fakta sebagai daftar teks untuk prompt."""
     start_hour, end_hour = next((s, e) for bucket, s, e in TIME_BUCKET_HOURS if bucket == facts.time_bucket)
+    place = [f"- Wilayah: {facts.place_name}"] if facts.place_name else []
     return "\n".join(
         [
+            *place,
             f"- Skor kerawanan: {facts.risk_score:.2f} dari 10 (tingkat: {facts.risk_level})",
             f"- Rentang waktu: {facts.time_bucket.replace('_', ' ')} ({start_hour:02d}.00-{end_hour:02d}.00 WIB)",
             _describe_incident_count(facts.incident_count),

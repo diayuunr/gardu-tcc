@@ -1,0 +1,324 @@
+{
+  "risk_level": "berisiko_tinggi",
+  "max_risk_score": 8.11,
+  "areas_to_avoid": [
+    {
+      "area_name": "Jalan Kaliurang",
+      "place_name": "Kec. Depok",
+      "label": "Jalan Kaliurang (Kec. Depok)",
+      "latitude": -7.75871,
+      "longitude": 110.38639,
+      "time_bucket": "malam",
+      "risk_score": 8.11,
+      "risk_level": "tinggi",
+      "segment_index": 1
+    }
+  ],
+  "areas_to_watch": [
+    {
+      "area_name": "Ring Road Utara",
+      "place_name": "Kec. Ngaglik",
+      "label": "Ring Road Utara (Kec. Ngaglik)",
+      "latitude": -7.73685,
+      "longitude": 110.3975,
+      "time_bucket": "malam",
+      "risk_score": 3.59,
+      "risk_level": "sedang",
+      "segment_index": 2
+    }
+  ],
+  "areas_checked": 65,
+  "areas_with_data": 41,
+  "origin": {
+    "latitude": -7.7829,
+    "longitude": 110.3671,
+    "place_name": "Kec. Jetis (Kota Yogyakarta)"
+  },
+  "destination": {
+    "latitude": -7.73,
+    "longitude": 110.406,
+    "place_name": "Kec. Ngaglik"
+  },
+  "distance_km": 7.5,
+  "duration_minutes": 14,
+  "departure_time": "2026-09-20T22:00:00+07:00",
+  "time_buckets": [
+    "malam"
+  ],
+  "data_coverage": 0.631,
+  "data_limited": false,
+  "data_note": null,
+  "location_notes": [],
+  "alternatives": [
+    {
+      "risk_level": "aman",
+      "max_risk_score": 0.0,
+      "distance_km": 9.7,
+      "duration_minutes": 14,
+      "data_coverage": 0.797,
+      "data_limited": false,
+      "is_lowest_risk": true,
+      "extra_minutes": 0,
+      "summary": {
+        "status": "aman",
+        "max_risk_score": 0.0,
+        "distance_km": 9.7,
+        "duration_minutes": 14,
+        "data_coverage": 0.797,
+        "data_limited": false,
+        "high_exposure_m": 0,
+        "medium_exposure_m": 0,
+        "incident_count": 0,
+        "time_buckets": [
+          "malam"
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [110.3671, -7.7829],
+          [110.364, -7.779],
+          [110.361, -7.77],
+          [110.359, -7.756],
+          [110.364, -7.742],
+          [110.386, -7.736],
+          [110.4, -7.733],
+          [110.406, -7.73]
+        ]
+      },
+      "segments": [
+        {
+          "index": 0,
+          "road_name": "Jalan Mangkubumi",
+          "place_name": "Kec. Jetis (Kota Yogyakarta)",
+          "start_km": 0.0,
+          "end_km": 1.606,
+          "length_m": 1606,
+          "risk_level": "rendah",
+          "risk_score": 0.0,
+          "incident_count": 0,
+          "dominant_category": null,
+          "incident_hours": {},
+          "has_nearby_data": false,
+          "peak_time_bucket": "malam",
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [110.3671, -7.7829],
+              [110.364, -7.779],
+              [110.361, -7.77]
+            ]
+          }
+        },
+        {
+          "index": 1,
+          "road_name": "Jalan Magelang",
+          "place_name": "Kec. Mlati",
+          "start_km": 1.606,
+          "end_km": 4.829,
+          "length_m": 3224,
+          "risk_level": "rendah",
+          "risk_score": 0.0,
+          "incident_count": 0,
+          "dominant_category": null,
+          "incident_hours": {},
+          "has_nearby_data": true,
+          "peak_time_bucket": "malam",
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [110.361, -7.77],
+              [110.359, -7.756],
+              [110.364, -7.742]
+            ]
+          }
+        },
+        {
+          "index": 2,
+          "road_name": "Ring Road Utara",
+          "place_name": "Kec. Ngaglik",
+          "start_km": 4.829,
+          "end_km": 8.922,
+          "length_m": 4092,
+          "risk_level": "rendah",
+          "risk_score": 0.0,
+          "incident_count": 0,
+          "dominant_category": null,
+          "incident_hours": {},
+          "has_nearby_data": true,
+          "peak_time_bucket": "malam",
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [110.364, -7.742],
+              [110.386, -7.736],
+              [110.4, -7.733]
+            ]
+          }
+        },
+        {
+          "index": 3,
+          "road_name": "jalan tanpa nama",
+          "place_name": "Kec. Ngaglik",
+          "start_km": 8.922,
+          "end_km": 9.662,
+          "length_m": 740,
+          "risk_level": "rendah",
+          "risk_score": 0.0,
+          "incident_count": 0,
+          "dominant_category": null,
+          "incident_hours": {},
+          "has_nearby_data": true,
+          "peak_time_bucket": "malam",
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [110.4, -7.733],
+              [110.406, -7.73]
+            ]
+          }
+        }
+      ],
+      "reasons": [
+        "Tidak ada bagian jalur yang melewati area berskor sedang atau tinggi pada jam perjalanan, berdasarkan data kejadian yang tercatat.",
+        "Hasil berdasarkan data kejadian yang tercatat dan bukan jaminan keamanan; 80% titik pemeriksaan memiliki data kejadian di sekitarnya.",
+        "Lebih rendah risikonya dibanding rute utama, dengan waktu tempuh yang sama."
+      ]
+    }
+  ],
+  "safer_alternative_available": true,
+  "summary": {
+    "status": "berisiko_tinggi",
+    "max_risk_score": 8.11,
+    "distance_km": 7.5,
+    "duration_minutes": 14,
+    "data_coverage": 0.631,
+    "data_limited": false,
+    "high_exposure_m": 250,
+    "medium_exposure_m": 750,
+    "incident_count": 11,
+    "time_buckets": [
+      "malam"
+    ]
+  },
+  "geometry": {
+    "type": "LineString",
+    "coordinates": [
+      [110.3671, -7.7829],
+      [110.3715, -7.779],
+      [110.375, -7.7745],
+      [110.38, -7.767],
+      [110.386, -7.76],
+      [110.392, -7.74],
+      [110.399, -7.736],
+      [110.406, -7.73]
+    ]
+  },
+  "segments": [
+    {
+      "index": 0,
+      "road_name": "Jalan Cik Di Tiro",
+      "place_name": "Kec. Jetis (Kota Yogyakarta)",
+      "start_km": 0.0,
+      "end_km": 1.282,
+      "length_m": 1282,
+      "risk_level": "rendah",
+      "risk_score": 0.0,
+      "incident_count": 0,
+      "dominant_category": null,
+      "incident_hours": {},
+      "has_nearby_data": false,
+      "peak_time_bucket": "malam",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [110.3671, -7.7829],
+          [110.3715, -7.779],
+          [110.375, -7.7745]
+        ]
+      }
+    },
+    {
+      "index": 1,
+      "road_name": "Jalan Kaliurang",
+      "place_name": "Kec. Depok",
+      "start_km": 1.282,
+      "end_km": 5.623,
+      "length_m": 4341,
+      "risk_level": "tinggi",
+      "risk_score": 8.11,
+      "incident_count": 9,
+      "dominant_category": "klitih",
+      "incident_hours": {
+        "dini_hari": 2,
+        "malam": 7
+      },
+      "has_nearby_data": true,
+      "peak_time_bucket": "malam",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [110.375, -7.7745],
+          [110.38, -7.767],
+          [110.386, -7.76],
+          [110.392, -7.74]
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "road_name": "Ring Road Utara",
+      "place_name": "Kec. Ngaglik",
+      "start_km": 5.623,
+      "end_km": 7.023,
+      "length_m": 1400,
+      "risk_level": "sedang",
+      "risk_score": 3.59,
+      "incident_count": 2,
+      "dominant_category": "begal/penodongan",
+      "incident_hours": {
+        "malam": 2
+      },
+      "has_nearby_data": true,
+      "peak_time_bucket": "malam",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [110.392, -7.74],
+          [110.399, -7.736],
+          [110.4025, -7.733]
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "road_name": "jalan tanpa nama",
+      "place_name": "Kec. Ngaglik",
+      "start_km": 7.023,
+      "end_km": 7.533,
+      "length_m": 510,
+      "risk_level": "rendah",
+      "risk_score": 0.0,
+      "incident_count": 0,
+      "dominant_category": null,
+      "incident_hours": {},
+      "has_nearby_data": true,
+      "peak_time_bucket": "malam",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [110.4025, -7.733],
+          [110.406, -7.73]
+        ]
+      }
+    }
+  ],
+  "reasons": [
+    "Sekitar 250 m jalur melewati area berskor kerawanan tinggi pada jam perjalanan.",
+    "Melewati Jalan Kaliurang (Kec. Depok): 9 kejadian tercatat dalam radius 300 m dari jalur, kategori terbanyak klitih, paling sering pada jam malam dan dini hari. Anda diperkirakan melintas pada jam malam.",
+    "Melewati Ring Road Utara (Kec. Ngaglik): 2 kejadian tercatat dalam radius 300 m dari jalur, kategori terbanyak begal/penodongan, paling sering pada jam malam. Anda diperkirakan melintas pada jam malam.",
+    "Tersedia rute alternatif dengan risiko lebih rendah, dengan waktu tempuh yang sama."
+  ],
+  "recommended_route": 1,
+  "narrative": null
+}

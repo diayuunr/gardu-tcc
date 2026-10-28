@@ -23,7 +23,6 @@ from app.agents.risk_agent import (
     recalculate_risk_scores,
     risk_level_for,
 )
-from app.agents.route_agent import CrossedCell, fetch_route_scores
 from app.core.config import get_settings
 
 MIGRATIONS = Path(__file__).resolve().parent.parent / "supabase" / "migrations"
@@ -171,15 +170,7 @@ def test_heatmap_defaults_to_today_wib(monkeypatch):
     assert fetch_risk_cells(fake, "malam")[0].risk_level == "sedang"
 
 
-def test_route_scores_use_the_seasonal_multiplier_of_the_departure_date():
-    cell = CrossedCell(OWN_CELL, -7.815, 110.395, "malam", 0.0)
-    fake = _Rows([_score_row()])
-
-    normal = fetch_route_scores(fake, [cell], date(2026, 9, 20))[(OWN_CELL, "malam")]
-    pre = fetch_route_scores(fake, [cell], date(2027, 1, 30))[(OWN_CELL, "malam")]
-
-    assert (normal.risk_score, normal.risk_level) == (2.83, "rendah")
-    assert pre.risk_level == "sedang" and pre.risk_score == pytest.approx(3.68, abs=0.005)
+# (Pengali musim pada rute kini dihitung PER TITIK dari waktu tiba; lihat test_route_analysis.py.)
 
 
 def test_stored_scores_never_contain_the_seasonal_multiplier():

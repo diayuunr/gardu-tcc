@@ -71,7 +71,7 @@ def geocode_location(location_text: str) -> tuple[float, float] | None:
                 "bbox": f"{min_lon},{min_lat},{max_lon},{max_lat}",
                 "proximity": f"{YOGYAKARTA_PROXIMITY[0]},{YOGYAKARTA_PROXIMITY[1]}",
                 "country": "id",
-                "limit": 1,
+                "limit": 5,  # beberapa kandidat: yang pertama VALID di DIY dipilih (lihat bawah)
             },
             timeout=_GEOCODING_TIMEOUT_SECONDS,
         )
@@ -89,31 +89,37 @@ def geocode_location(location_text: str) -> tuple[float, float] | None:
         logger.info("Mapbox tidak menemukan koordinat untuk sebuah lokasi laporan")
         return None
 
-    feature = features[0]
+    # Ambil hasil PERTAMA yang valid di DIY, bukan sekadar hasil ke-1: Mapbox sering menaruh desa senama di
+    # Jawa Tengah (ID-JT) paling atas untuk landmark Yogyakarta, sedangkan yang benar ada di urutan berikutnya.
+    for feature in features:
+        point = valid_diy_point(feature)
+        if point is not None:
+            return point
 
+    # Koordinat & place_name hasil diturunkan dari teks yang diketik pengguna (bisa alamat rumah, mis. titik asal
+    # Cek Rute), jadi TIDAK dicatat di log — cukup jumlah hasil yang ditolak.
+    regions = sorted({code for f in features if (code := _extract_region_short_code(f))})
+    logger.info(
+        "Tidak ada dari %d hasil geocoding yang valid di DIY (di luar bbox/region %s); region ditemukan: %s",
+        len(features), YOGYAKARTA_REGION_SHORT_CODE, ", ".join(regions) or "-",
+    )
+    return None
+
+
+def valid_diy_point(feature: dict) -> tuple[float, float] | None:
+    """(lintang, bujur) sebuah fitur Mapbox bila VALID di DIY: di dalam bbox DIY dan, bila fitur memuat info
+    region, region-nya ID-YO. Fitur rusak atau di luar DIY -> None."""
     try:
-        longitude, latitude = feature["center"]
-    except (KeyError, ValueError, TypeError) as exc:
-        logger.warning("Format respons Mapbox tidak terduga: %s", safe_error_summary(exc))
+        longitude, latitude = (float(v) for v in feature["center"])
+    except (KeyError, ValueError, TypeError):
         return None
-
-    # Koordinat & place_name hasil diturunkan dari teks yang diketik pengguna (bisa
-    # alamat rumah, mis. titik asal Cek Rute), jadi TIDAK dicatat di log — cukup
-    # alasan penolakan dan kode region (bukan data pribadi).
+    min_lon, min_lat, max_lon, max_lat = YOGYAKARTA_BBOX
     if not (min_lon <= longitude <= max_lon and min_lat <= latitude <= max_lat):
-        logger.info("Hasil geocoding di luar bbox Yogyakarta, diabaikan")
         return None
-
     region_short_code = _extract_region_short_code(feature)
     if region_short_code is not None and region_short_code != YOGYAKARTA_REGION_SHORT_CODE:
-        logger.info(
-            "Hasil geocoding cocok ke region %s (bukan %s), diabaikan",
-            region_short_code,
-            YOGYAKARTA_REGION_SHORT_CODE,
-        )
         return None
-
-    return (latitude, longitude)
+    return latitude, longitude
 
 
 _AREA_NAME_CACHE_MAX_ENTRIES = 512
@@ -171,6 +177,10 @@ def describe_area(latitude: float, longitude: float) -> str | None:
         del _area_name_cache[next(iter(_area_name_cache))]  # buang yang paling lama masuk
     _area_name_cache[cache_key] = name.strip()
     return name.strip()
+
+
+def extract_region_short_code(feature: dict) -> str | None:
+    return _extract_region_short_code(feature)
 
 
 def _extract_region_short_code(feature: dict) -> str | None:

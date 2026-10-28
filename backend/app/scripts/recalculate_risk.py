@@ -75,6 +75,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
+    if not result.names_resolved:
+        logger.warning("Nama wilayah (place_name) TIDAK diperbarui: data areas tak terbaca/kosong (jalankan load_areas).")
+
     mode = "DRY RUN (tidak disimpan)" if args.dry_run else "disimpan ke risk_scores"
     logger.info(
         "%s | %d insiden dipakai, %d dilewati (tanpa koordinat)",
@@ -84,12 +87,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     for row in sorted(result.rows, key=lambda r: r.risk_score, reverse=True):
         logger.info(
-            "  %-22s %-10s skor=%-5.2f %-7s n=%d",
+            "  %-22s %-10s skor=%-5.2f %-7s n=%d  %s",
             row.area_name,
             row.time_bucket,
             row.risk_score,
             row.risk_level,
             row.contributing_incident_count,
+            row.place_name or "(tanpa kecamatan dekat)",
         )
     if not args.dry_run:
         logger.info("Selesai: %d baris di-upsert, %d baris usang dihapus.", result.upserted, result.deleted)

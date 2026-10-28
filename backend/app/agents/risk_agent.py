@@ -69,13 +69,14 @@ import math
 import threading
 from collections import defaultdict
 from collections.abc import Iterable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
 
 from hijri_converter import Gregorian, Hijri
 from supabase import Client
 
+from app.core.areas import AreaDirectory, AreasUnavailable, get_area_directory
 from app.core.config import Settings, get_settings
 from app.core.db_retry import execute_with_retry
 from app.core.safe_log import safe_error_summary
@@ -119,6 +120,8 @@ class RiskScoreRow:
     risk_score: float
     risk_level: str
     contributing_incident_count: int
+    place_name: str | None = None  # "Kec. X" (kecamatan terdekat), diisi assign_places saat hitung ulang
+    kecamatan_kode: str | None = None
 
 
 @dataclass(frozen=True)
@@ -137,6 +140,7 @@ class RiskLookup:
     base_score: float = 0.0
     season: str | None = None  # JELANG_RAMADAN / SELAMA_RAMADAN / None — musim pada tanggal pertanyaan
     season_multiplier: float = 1.0  # pengali yang BENAR-BENAR diterapkan ke base_score
+    place_name: str | None = None  # label publik wilayah ("Kec. X"); None -> tampilkan area_name
 
 
 @dataclass(frozen=True)
@@ -155,6 +159,20 @@ class RiskCell:
     base_score: float = 0.0
     season: str | None = None
     season_multiplier: float = 1.0
+    place_name: str | None = None
+    kecamatan_kode: str | None = None
+
+
+@dataclass(frozen=True)
+class RegionSummary:
+    """Ringkasan skor satu kecamatan untuk satu bucket jam (agregat dari sel-selnya)."""
+
+    kecamatan_kode: str
+    place_name: str
+    risk_score: float  # skor AKHIR tertinggi di antara sel-selnya
+    risk_level: str  # level dari skor akhir tertinggi itu (sudah termasuk pengali musim)
+    cell_count: int
+    incident_count: int  # jumlah kontribusi insiden pada sel-sel kecamatan itu
 
 
 @dataclass(frozen=True)
@@ -167,6 +185,9 @@ class RecalculationResult:
     # True = hasil perhitungan KOSONG dan penyimpanan dibatalkan (skor lama dipertahankan);
     # lihat parameter `allow_empty` di recalculate_risk_scores.
     blocked_empty: bool = False
+    # True = nama wilayah (place_name) ikut diperbarui; False = direktori wilayah tak terbaca/kosong,
+    # kolom nama di database sengaja TIDAK disentuh (label lama dipertahankan).
+    names_resolved: bool = False
 
 
 # ---------------------------------------------------------------- fungsi murni
@@ -352,6 +373,73 @@ def compute_risk_scores(
     return sorted(rows, key=lambda r: (r.area_name, r.time_bucket))
 
 
+def public_label(place_name: str | None, area_name: str) -> str:
+    """Label publik sebuah sel: nama wilayah nyata bila ada, selain itu label grid netral."""
+    return place_name or area_name
+
+
+def assign_places(rows: list[RiskScoreRow], directory: AreaDirectory, settings: Settings) -> list[RiskScoreRow]:
+    """Beri tiap baris skor nama kecamatan TERDEKAT dari pusat sel grid (fungsi murni, tanpa jaringan).
+
+    Sel yang tak punya kecamatan dalam `risk_place_max_distance_meters` dibiarkan tanpa nama
+    (`place_name=None`) dan tetap tampil dengan label grid netral. Ini pendekatan "pusat terdekat",
+    bukan batas poligon resmi: sel di perbatasan bisa mendapat kecamatan tetangga yang pusatnya
+    lebih dekat."""
+    named: list[RiskScoreRow] = []
+    for row in rows:
+        kecamatan = directory.nearest_kecamatan(row.latitude, row.longitude, settings.risk_place_max_distance_meters)
+        if kecamatan is None:
+            named.append(replace(row, place_name=None, kecamatan_kode=None))
+        else:
+            named.append(replace(row, place_name=directory.place_name(kecamatan), kecamatan_kode=kecamatan.kode))
+    return named
+
+
+def summarize_by_kecamatan(cells: list[RiskCell]) -> tuple[list[RegionSummary], int]:
+    """Agregasi sel per kecamatan (fungsi murni): skor tertinggi, jumlah sel, total insiden kontribusi.
+
+    Urut skor tertinggi (lalu insiden terbanyak, lalu nama) supaya deterministik. Sel tanpa
+    `kecamatan_kode` (tak ada kecamatan dekat / belum dihitung ulang) tidak masuk ringkasan dan
+    dihitung terpisah (elemen kedua). Level diambil dari sel berskor tertinggi: level selalu turunan
+    dari skor akhir, jadi tidak ada ketidakcocokan dengan pengali musim."""
+    grouped: dict[str, list[RiskCell]] = {}
+    unassigned = 0
+    for cell in cells:
+        if cell.kecamatan_kode is None:
+            unassigned += 1
+        else:
+            grouped.setdefault(cell.kecamatan_kode, []).append(cell)
+
+    regions: list[RegionSummary] = []
+    for kode, group in grouped.items():
+        top = max(group, key=lambda c: c.risk_score)
+        regions.append(
+            RegionSummary(
+                kecamatan_kode=kode,
+                place_name=next((c.place_name for c in group if c.place_name), kode),
+                risk_score=top.risk_score,
+                risk_level=top.risk_level,
+                cell_count=len(group),
+                incident_count=sum(c.contributing_incident_count for c in group),
+            )
+        )
+    regions.sort(key=lambda r: (-r.risk_score, -r.incident_count, r.place_name))
+    return regions, unassigned
+
+
+def _resolve_directory(supabase: Client) -> AreaDirectory | None:
+    """Direktori wilayah untuk penamaan, atau None bila tak terbaca/kosong (hitung ulang skor tetap jalan)."""
+    try:
+        directory = get_area_directory(supabase)
+    except AreasUnavailable:
+        logger.warning("Data wilayah tak terbaca: skor dihitung ulang TANPA memperbarui nama wilayah")
+        return None
+    if len(directory) == 0:
+        logger.warning("Tabel areas kosong (jalankan app.scripts.load_areas): nama wilayah tidak diperbarui")
+        return None
+    return directory
+
+
 # ------------------------------------------------------------- akses database
 
 
@@ -406,7 +494,7 @@ def _fetch_existing_score_keys(supabase: Client) -> list[dict]:
 
 
 def _persist_scores(
-    supabase: Client, rows: list[RiskScoreRow], calculated_at: datetime
+    supabase: Client, rows: list[RiskScoreRow], calculated_at: datetime, *, include_names: bool = False
 ) -> tuple[int, int]:
     """Upsert skor baru lalu hapus baris usang. Return (jumlah upsert, jumlah dihapus).
 
@@ -424,6 +512,8 @@ def _persist_scores(
             "risk_level": row.risk_level,
             "contributing_incident_count": row.contributing_incident_count,
             "last_calculated_at": calculated_at.isoformat(),
+            # Nama hanya ditulis bila direktori wilayah berhasil dibaca; kalau tidak, label lama dibiarkan.
+            **({"place_name": row.place_name, "kecamatan_kode": row.kecamatan_kode} if include_names else {}),
         }
         for row in rows
     ]
@@ -478,6 +568,9 @@ def recalculate_risk_scores(
 
     incidents, skipped = _fetch_scorable_incidents(client)
     rows = compute_risk_scores(incidents, moment, settings)
+    directory = _resolve_directory(client)
+    if directory is not None:
+        rows = assign_places(rows, directory, settings)
 
     if persist and not rows and not allow_empty:
         total = _count_all_incidents(client)
@@ -503,17 +596,39 @@ def recalculate_risk_scores(
 
     upserted = deleted = 0
     if persist:
-        upserted, deleted = _persist_scores(client, rows, calculated_at=datetime.now(timezone.utc))
+        upserted, deleted = _persist_scores(
+            client, rows, calculated_at=datetime.now(timezone.utc), include_names=directory is not None
+        )
+        _notify_recalculated()
     return RecalculationResult(
         rows=rows,
         incidents_used=len(incidents),
         incidents_skipped_without_coordinates=skipped,
         upserted=upserted,
         deleted=deleted,
+        names_resolved=directory is not None,
     )
 
 
 # -------------------------------------------------- pemicu otomatis (fig4 SRS)
+
+_recalculation_listeners: list = []
+
+
+def add_recalculation_listener(listener) -> None:
+    """Daftarkan fungsi tanpa argumen yang dipanggil SETELAH skor berhasil dihitung ulang & disimpan
+    (mis. membuang cache turunan data insiden). Kegagalan listener tidak mengganggu perhitungan."""
+    if listener not in _recalculation_listeners:
+        _recalculation_listeners.append(listener)
+
+
+def _notify_recalculated() -> None:
+    for listener in _recalculation_listeners:
+        try:
+            listener()
+        except Exception as exc:  # noqa: BLE001 - listener tidak boleh menggagalkan perhitungan skor
+            logger.error("Listener pasca-hitung-ulang gagal: %s", safe_error_summary(exc))
+
 
 _state_lock = threading.Lock()
 _recalculation_running = False
@@ -581,7 +696,7 @@ def lookup_risk_score(
     bucket = time_bucket_of(at)
     response = execute_with_retry(
         supabase.table("risk_scores")
-        .select("risk_score,risk_level,contributing_incident_count,last_calculated_at")
+        .select("risk_score,risk_level,contributing_incident_count,last_calculated_at,place_name")
         .eq("area_name", area_name)
         .eq("time_bucket", bucket)
         .limit(1)
@@ -602,6 +717,7 @@ def lookup_risk_score(
         base_score=base_score,
         season=seasonal.phase,
         season_multiplier=seasonal.multiplier,
+        place_name=row.get("place_name"),
     )
 
 
@@ -634,7 +750,7 @@ def fetch_risk_cells(supabase: Client, time_bucket: str, on_date: date | None = 
             supabase.table("risk_scores")
             .select(
                 "area_name,latitude,longitude,time_bucket,risk_score,risk_level,"
-                "contributing_incident_count,last_calculated_at"
+                "contributing_incident_count,last_calculated_at,place_name,kecamatan_kode"
             )
             .eq("time_bucket", time_bucket)
             .order("area_name")
@@ -659,6 +775,8 @@ def fetch_risk_cells(supabase: Client, time_bucket: str, on_date: date | None = 
                     base_score=base_score,
                     season=seasonal.phase,
                     season_multiplier=seasonal.multiplier,
+                    place_name=row.get("place_name"),
+                    kecamatan_kode=row.get("kecamatan_kode"),
                 )
             )
         if len(rows) < _PAGE_SIZE:

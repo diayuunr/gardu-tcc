@@ -48,7 +48,7 @@ def test_narrative_for_risky_route_uses_only_aggregate_facts(monkeypatch):
     prompt = prompts[0]
     assert "Status rute: berisiko tinggi" in prompt and "dihindari (berisiko tinggi): Kotagede" in prompt
     assert "sore (15.00-18.00 WIB), lalu malam (18.00-24.00 WIB)" in prompt
-    assert "skor tersedia untuk 2 dari 9 area" in prompt
+    assert "ada data kejadian di sekitar 2 dari 9 titik pemeriksaan" in prompt
     assert "Area -7." not in prompt  # tanpa label/koordinat grid
 
 

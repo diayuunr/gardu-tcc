@@ -15,8 +15,8 @@ const FEATURES = [
     href: '/lapor',
   },
   {
-    title: 'Ekstraksi & Klasterisasi AI',
-    desc: 'AI mengekstrak lokasi, waktu, jenis kejadian, lalu mengelompokkan laporan.',
+    title: 'Kategori & Pengelompokan AI',
+    desc: 'AI mengategorikan jenis kejadian lalu mengelompokkan laporan yang mirip. Lokasi dan waktu berasal dari formulir.',
     icon: 'M9 12l2 2 4-4M12 3l7 4v5c0 5-3.2 8.6-7 10-3.8-1.4-7-5-7-10V7l7-4z',
     href: '/lapor',
   },

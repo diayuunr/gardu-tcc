@@ -349,7 +349,8 @@ def test_score_endpoint_returns_stored_score_for_the_area_and_time():
 
     assert response.status_code == 200
     assert response.json() == {
-        "area_name": "Area -7.815, 110.395", "time_bucket": "malam", "risk_score": 4.17,
+        "area_name": "Area -7.815, 110.395", "place_name": None, "label": "Area -7.815, 110.395",  # tanpa kecamatan dekat
+        "time_bucket": "malam", "risk_score": 4.17,
         "risk_level": "sedang", "contributing_incident_count": 1, "has_data": True,
         "narrative": None,  # default include_narrative=false -> jalur cepat, tanpa Gemini
     }

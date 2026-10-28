@@ -82,6 +82,29 @@ def test_geocode_location_rejects_bordering_region_inside_bbox(monkeypatch):
     assert result is None
 
 
+def test_geocode_location_skips_invalid_first_candidates_and_uses_the_first_valid_diy_one(monkeypatch):
+    """Regresi kasus nyata: hasil PERTAMA Mapbox sering bukan DIY (desa sama nama di Klaten, atau luar bbox),
+    padahal kandidat ke-3 benar. Dulu limit=1 -> tempat valid ikut ditolak; kini limit=5 dan kandidat valid
+    pertama yang dipilih."""
+    captured = {}
+
+    def fake_get(_url, params=None, timeout=None):
+        captured.update(params)
+        klaten = {"center": [110.69762, -7.77396], "place_name": "Tugu, Klaten",
+                  "context": [{"id": "region.1", "short_code": "ID-JT"}]}
+        jakarta = {"center": [106.8456, -6.2088], "place_name": "Jakarta"}
+        valid = {"center": [110.3670, -7.7829], "place_name": "Tugu, Yogyakarta",
+                 "context": [{"id": "region.2", "short_code": "ID-YO"}]}
+        later = {"center": [110.40, -7.80], "place_name": "Lain, Yogyakarta", "context": [{"id": "region.2", "short_code": "ID-YO"}]}
+        return httpx.Response(200, json={"features": [klaten, jakarta, valid, later]},
+                              request=httpx.Request("GET", "https://api.mapbox.com/x"))
+
+    monkeypatch.setattr(geocoding.httpx, "get", fake_get)
+
+    assert geocoding.geocode_location("Tugu Yogyakarta") == (-7.7829, 110.3670)
+    assert captured["limit"] == 5
+
+
 def test_failure_log_never_contains_mapbox_token_or_location_text(monkeypatch, caplog):
     secret_token = "pk.SECRET-TOKEN-MAPBOX"
     location = "Rumah Pak Budi Jl. Rahasia Nomor 5"

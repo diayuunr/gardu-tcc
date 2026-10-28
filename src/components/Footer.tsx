@@ -14,23 +14,23 @@ export default function Footer() {
             <div className="mt-6 flex items-center gap-4">
               <Image
                 src="/jack.png"
-                alt="Dita"
+                alt="Maskot TCC"
                 width={40}
                 height={40}
-                className="h-8 w-8 rounded-full object-fit-cover"
+                className="h-8 w-8 rounded-full object-cover"
               />
 
               <Image
                 src="/tcc.png"
-                alt="Anggota tim"
+                alt="Logo TCC"
                 width={40}
                 height={40}
-                className="h-8 w-8 rounded-full object-fit-cover"
+                className="h-8 w-8 rounded-full object-cover"
               />
 
               <Image
                 src="/utm.png"
-                alt="Anggota tim"
+                alt="Logo Universitas Trunojoyo Madura"
                 width={40}
                 height={40}
                 className="h-8 w-8 rounded-full object-cover"
@@ -50,13 +50,14 @@ export default function Footer() {
             <div>
               <p className="mb-3 font-semibold text-zinc-300">Pemantauan</p>
               <ul className="space-y-2 text-zinc-500">
-                <li><Link className="transition hover:text-emerald-300" href="/admin">Histori Laporan</Link></li>
+                <li><Link className="transition hover:text-emerald-300" href="/laporan">Histori Laporan</Link></li>
+                <li><Link className="transition hover:text-emerald-300" href="/admin">Moderator</Link></li>
               </ul>
             </div>
           </div>
         </div>
         <div className="mt-10 border-t border-line pt-6 text-xs text-zinc-600">
-          Prototype Trunodjoyo Creative Competition (TCC) 2026
+          Prototype Trunodjoyo Creative Competition (TCC) 2026. Hasil Gardu berdasarkan data tercatat (termasuk data simulasi) dan bukan jaminan keamanan.
         </div>
       </div>
     </footer>

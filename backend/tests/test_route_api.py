@@ -27,8 +27,8 @@ VALID_BODY = {"origin": ORIGIN, "destination": DESTINATION}
 
 def _result(level="berisiko_tinggi", narrative=None) -> RouteCheckResult:
     flagged = (
-        FlaggedArea("Area -7.815, 110.395", -7.815, 110.395, "malam", 7.6, "tinggi", "Kotagede"),
-        FlaggedArea("Area -7.795, 110.365", -7.795, 110.365, "malam", 4.2, "sedang", None),
+        FlaggedArea("Jalan Kaliurang", -7.77, 110.38, "malam", 7.6, "tinggi", "Kec. Depok", 0),
+        FlaggedArea("Jalan Palagan", -7.75, 110.36, "malam", 4.2, "sedang", None, 1),
     )
     return RouteCheckResult(
         assessment=RouteAssessment(level, 7.6, flagged, areas_checked=9, areas_with_data=2),
@@ -71,9 +71,13 @@ def test_returns_risk_indicator_and_areas_to_avoid_and_skips_narrative_by_defaul
     body = response.json()
     assert response.status_code == 200
     assert body["risk_level"] == "berisiko_tinggi"  # REQ-F-031
-    assert [a["place_name"] for a in body["areas_to_avoid"]] == ["Kotagede"]  # REQ-F-032
+    assert [a["place_name"] for a in body["areas_to_avoid"]] == ["Kec. Depok"]  # REQ-F-032
+    assert [a["label"] for a in body["areas_to_avoid"]] == ["Jalan Kaliurang (Kec. Depok)"]
+    assert [a["label"] for a in body["areas_to_watch"]] == ["Jalan Palagan"]  # tanpa kecamatan dekat: nama jalan saja
     assert [a["risk_level"] for a in body["areas_to_watch"]] == ["sedang"]
     assert (body["areas_checked"], body["areas_with_data"], body["duration_minutes"]) == (9, 2, 21)
+    assert body["geometry"] == {"type": "LineString", "coordinates": []}  # hasil buatan tanpa analisis: tetap valid
+    assert body["summary"]["status"] == "berisiko_tinggi" and body["recommended_route"] == 0
     assert body["narrative"] is None  # default: tanpa Gemini
     assert (body["origin"]["place_name"], body["destination"]["place_name"]) == ("Kotagede", None)
     assert fake_agent[0]["narrative"] is False
@@ -112,6 +116,18 @@ def test_include_narrative_flag_reaches_the_agent_and_naive_departure_is_wib(fak
 def test_invalid_input_is_rejected_at_the_api_level(body, fake_agent):
     assert client.post("/route/check", json=body).status_code == 422
     assert fake_agent == []  # tidak pernah sampai ke agen
+
+
+def test_departure_in_the_past_is_rejected_with_a_clear_message_but_the_grace_period_is_allowed(fake_agent):
+    past = (datetime.now(WIB) - timedelta(hours=2)).replace(tzinfo=None, microsecond=0)
+    just_now = (datetime.now(WIB) - timedelta(minutes=2)).replace(tzinfo=None, microsecond=0)
+
+    rejected = client.post("/route/check", json={**VALID_BODY, "departure_time": past.isoformat()})
+    accepted = client.post("/route/check", json={**VALID_BODY, "departure_time": just_now.isoformat()})
+
+    assert rejected.status_code == 422 and "tidak boleh di masa lalu" in rejected.json()["detail"]
+    assert accepted.status_code == 200  # toleransi 5 menit (jam di perangkat pengguna bisa sedikit tertinggal)
+    assert len(fake_agent) == 1  # yang ditolak tidak sampai ke agen
 
 
 def test_include_narrative_must_be_a_boolean(fake_agent):

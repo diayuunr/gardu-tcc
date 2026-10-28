@@ -1,0 +1,1325 @@
+{
+ "versi": 1,
+ "catatan": "Daftar tempat populer DIY yang dikurasi manual. Koordinat tempat awal ditulis tangan lalu diuji silang ke OpenStreetMap; tempat tambahan koordinatnya diambil dari OpenStreetMap (Nominatim, (c) kontributor OpenStreetMap, ODbL). `keyakinan`: tinggi = selisih <= 250 m dari OSM, sedang = nama cocok di OSM atau selisih <= 900 m, perlu_tinjau = belum terverifikasi / titik di jalan atau kawasan. Tinjau manual sebelum dianggap final.",
+ "tempat": [
+  {
+   "nama": "Tugu Yogyakarta",
+   "alias": [
+    "Tugu Jogja",
+    "Tugu Pal Putih",
+    "Tugu Jogjakarta",
+    "Tugu"
+   ],
+   "kategori": "monumen",
+   "lat": -7.78292,
+   "lon": 110.36702,
+   "keyakinan": "tinggi"
+  },
+  {
+   "nama": "Malioboro",
+   "alias": [
+    "Jalan Malioboro",
+    "Jl Malioboro",
+    "Jl. Malioboro"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.79278,
+   "lon": 110.3658,
+   "keyakinan": "tinggi"
+  },
+  {
+   "nama": "Stasiun Yogyakarta",
+   "alias": [
+    "Stasiun Tugu",
+    "Stasiun Tugu Jogja",
+    "Stasiun Tugu Yogyakarta",
+    "Stasiun Jogja"
+   ],
+   "kategori": "transportasi",
+   "lat": -7.78942,
+   "lon": 110.36334,
+   "keyakinan": "tinggi"
+  },
+  {
+   "nama": "Stasiun Lempuyangan",
+   "alias": [
+    "Lempuyangan",
+    "Stasiun Lempuyangan Jogja"
+   ],
+   "kategori": "transportasi",
+   "lat": -7.79021,
+   "lon": 110.37552,
+   "keyakinan": "tinggi"
+  },
+  {
+   "nama": "Stasiun Maguwo",
+   "alias": [
+    "Maguwo",
+    "Stasiun Maguwo Jogja"
+   ],
+   "kategori": "transportasi",
+   "lat": -7.78496,
+   "lon": 110.4369,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Terminal Giwangan",
+   "alias": [
+    "Giwangan",
+    "Terminal Jogja",
+    "Terminal Induk Giwangan"
+   ],
+   "kategori": "transportasi",
+   "lat": -7.833,
+   "lon": 110.391,
+   "keyakinan": "tinggi"
+  },
+  {
+   "nama": "Terminal Jombor",
+   "alias": [
+    "Jombor",
+    "Terminal Jombor Sleman"
+   ],
+   "kategori": "transportasi",
+   "lat": -7.7424,
+   "lon": 110.359,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Bandara Internasional Yogyakarta",
+   "alias": [
+    "Bandara YIA",
+    "YIA",
+    "Yogyakarta International Airport",
+    "Bandara Kulon Progo",
+    "Bandara Temon"
+   ],
+   "kategori": "transportasi",
+   "lat": -7.9007,
+   "lon": 110.0573,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Bandara Adisutjipto",
+   "alias": [
+    "Adisutjipto",
+    "Adisucipto",
+    "Bandara Adi Sucipto",
+    "Bandara Jogja",
+    "Bandara Adisucipto"
+   ],
+   "kategori": "transportasi",
+   "lat": -7.7882,
+   "lon": 110.4317,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Universitas Gadjah Mada",
+   "alias": [
+    "UGM",
+    "Kampus UGM",
+    "Gadjah Mada",
+    "Bulaksumur"
+   ],
+   "kategori": "kampus",
+   "lat": -7.7716,
+   "lon": 110.3775,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Universitas Negeri Yogyakarta",
+   "alias": [
+    "UNY",
+    "Kampus UNY",
+    "Karangmalang",
+    "Universitas Negeri Jogja"
+   ],
+   "kategori": "kampus",
+   "lat": -7.7747,
+   "lon": 110.3862,
+   "keyakinan": "tinggi"
+  },
+  {
+   "nama": "UIN Sunan Kalijaga",
+   "alias": [
+    "UIN Suka",
+    "UIN Jogja",
+    "Universitas Islam Negeri Sunan Kalijaga",
+    "UIN Sunan Kalijaga Yogyakarta"
+   ],
+   "kategori": "kampus",
+   "lat": -7.7869,
+   "lon": 110.3935,
+   "keyakinan": "tinggi"
+  },
+  {
+   "nama": "Universitas Islam Indonesia",
+   "alias": [
+    "UII",
+    "Kampus Terpadu UII",
+    "UII Kaliurang"
+   ],
+   "kategori": "kampus",
+   "lat": -7.686,
+   "lon": 110.411,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Universitas Muhammadiyah Yogyakarta",
+   "alias": [
+    "UMY",
+    "Kampus UMY"
+   ],
+   "kategori": "kampus",
+   "lat": -7.8112,
+   "lon": 110.3234,
+   "keyakinan": "tinggi"
+  },
+  {
+   "nama": "Universitas Sanata Dharma",
+   "alias": [
+    "USD",
+    "Sanata Dharma",
+    "Sanata Dharma Mrican"
+   ],
+   "kategori": "kampus",
+   "lat": -7.7742,
+   "lon": 110.389,
+   "keyakinan": "tinggi"
+  },
+  {
+   "nama": "UPN Veteran Yogyakarta",
+   "alias": [
+    "UPN",
+    "UPN Jogja",
+    "UPNVY",
+    "UPN Veteran"
+   ],
+   "kategori": "kampus",
+   "lat": -7.7619,
+   "lon": 110.4083,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Universitas Atma Jaya Yogyakarta",
+   "alias": [
+    "UAJY",
+    "Atma Jaya",
+    "Atma Jaya Jogja"
+   ],
+   "kategori": "kampus",
+   "lat": -7.7785,
+   "lon": 110.414,
+   "keyakinan": "tinggi"
+  },
+  {
+   "nama": "Institut Seni Indonesia Yogyakarta",
+   "alias": [
+    "ISI Yogyakarta",
+    "ISI Jogja",
+    "ISI"
+   ],
+   "kategori": "kampus",
+   "lat": -7.85193,
+   "lon": 110.35607,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Universitas Amikom Yogyakarta",
+   "alias": [
+    "Amikom",
+    "Universitas Amikom"
+   ],
+   "kategori": "kampus",
+   "lat": -7.7603,
+   "lon": 110.4092,
+   "keyakinan": "tinggi"
+  },
+  {
+   "nama": "Universitas Kristen Duta Wacana",
+   "alias": [
+    "UKDW",
+    "Duta Wacana"
+   ],
+   "kategori": "kampus",
+   "lat": -7.787,
+   "lon": 110.378,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Alun-Alun Utara",
+   "alias": [
+    "Alun Alun Utara",
+    "Alun-Alun Lor",
+    "Alun Alun Lor",
+    "Alun-Alun Utara Keraton"
+   ],
+   "kategori": "wisata",
+   "lat": -7.8032,
+   "lon": 110.3645,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Alun-Alun Kidul",
+   "alias": [
+    "Alun Alun Kidul",
+    "Alkid",
+    "Alun-Alun Selatan",
+    "Alun Alun Selatan"
+   ],
+   "kategori": "wisata",
+   "lat": -7.8118,
+   "lon": 110.364,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Keraton Yogyakarta",
+   "alias": [
+    "Kraton Yogyakarta",
+    "Kraton Jogja",
+    "Keraton Jogja",
+    "Kraton",
+    "Keraton"
+   ],
+   "kategori": "wisata",
+   "lat": -7.8053,
+   "lon": 110.3642,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Taman Sari",
+   "alias": [
+    "Tamansari",
+    "Taman Sari Keraton",
+    "Water Castle Jogja"
+   ],
+   "kategori": "wisata",
+   "lat": -7.81,
+   "lon": 110.3594,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Candi Prambanan",
+   "alias": [
+    "Prambanan",
+    "Candi Roro Jonggrang"
+   ],
+   "kategori": "wisata",
+   "lat": -7.752,
+   "lon": 110.4914,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Candi Ratu Boko",
+   "alias": [
+    "Ratu Boko",
+    "Keraton Ratu Boko"
+   ],
+   "kategori": "wisata",
+   "lat": -7.7704,
+   "lon": 110.4893,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Pantai Parangtritis",
+   "alias": [
+    "Parangtritis"
+   ],
+   "kategori": "pantai",
+   "lat": -8.025,
+   "lon": 110.3288,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Gumuk Pasir Parangkusumo",
+   "alias": [
+    "Parangkusumo",
+    "Gumuk Pasir"
+   ],
+   "kategori": "pantai",
+   "lat": -8.01705,
+   "lon": 110.31719,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Pantai Depok",
+   "alias": [
+    "Pantai Depok Bantul"
+   ],
+   "kategori": "pantai",
+   "lat": -8.014,
+   "lon": 110.289,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Pantai Indrayanti",
+   "alias": [
+    "Indrayanti"
+   ],
+   "kategori": "pantai",
+   "lat": -8.1505,
+   "lon": 110.6125,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Pantai Baron",
+   "alias": [
+    "Baron"
+   ],
+   "kategori": "pantai",
+   "lat": -8.128,
+   "lon": 110.5495,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Pantai Glagah",
+   "alias": [
+    "Glagah",
+    "Pantai Glagah Kulon Progo"
+   ],
+   "kategori": "pantai",
+   "lat": -7.9047,
+   "lon": 110.07744,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Jogja City Mall",
+   "alias": [
+    "JCM",
+    "JCM Jogja"
+   ],
+   "kategori": "belanja",
+   "lat": -7.7524,
+   "lon": 110.3607,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Plaza Ambarrukmo",
+   "alias": [
+    "Ambarrukmo Plaza",
+    "Amplaz",
+    "Ambarukmo Plaza"
+   ],
+   "kategori": "belanja",
+   "lat": -7.7833,
+   "lon": 110.401,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Malioboro Mall",
+   "alias": [
+    "Mall Malioboro"
+   ],
+   "kategori": "belanja",
+   "lat": -7.7932,
+   "lon": 110.3653,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Galeria Mall",
+   "alias": [
+    "Galeria"
+   ],
+   "kategori": "belanja",
+   "lat": -7.7818,
+   "lon": 110.3743,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Pasar Beringharjo",
+   "alias": [
+    "Beringharjo",
+    "Pasar Bringharjo"
+   ],
+   "kategori": "pasar",
+   "lat": -7.7984,
+   "lon": 110.3659,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Pasar Ngasem",
+   "alias": [
+    "Ngasem"
+   ],
+   "kategori": "pasar",
+   "lat": -7.8052,
+   "lon": 110.3585,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Pasar Kotagede",
+   "alias": [
+    "Pasar Gede Kotagede",
+    "Pasar Gede"
+   ],
+   "kategori": "pasar",
+   "lat": -7.8283,
+   "lon": 110.3979,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "RSUP Dr. Sardjito",
+   "alias": [
+    "RS Sardjito",
+    "Sardjito",
+    "Rumah Sakit Sardjito"
+   ],
+   "kategori": "kesehatan",
+   "lat": -7.7686,
+   "lon": 110.3732,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "RS Panti Rapih",
+   "alias": [
+    "Panti Rapih",
+    "Rumah Sakit Panti Rapih"
+   ],
+   "kategori": "kesehatan",
+   "lat": -7.7765,
+   "lon": 110.3747,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "RS PKU Muhammadiyah Yogyakarta",
+   "alias": [
+    "PKU Muhammadiyah Yogyakarta",
+    "RS PKU Jogja"
+   ],
+   "kategori": "kesehatan",
+   "lat": -7.8,
+   "lon": 110.3627,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "RS Bethesda Yogyakarta",
+   "alias": [
+    "Bethesda",
+    "RS Bethesda"
+   ],
+   "kategori": "kesehatan",
+   "lat": -7.7823,
+   "lon": 110.3755,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Monumen Jogja Kembali",
+   "alias": [
+    "Monjali",
+    "Monumen Yogya Kembali"
+   ],
+   "kategori": "wisata",
+   "lat": -7.7497,
+   "lon": 110.3691,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Museum Ullen Sentalu",
+   "alias": [
+    "Ullen Sentalu"
+   ],
+   "kategori": "wisata",
+   "lat": -7.599,
+   "lon": 110.4172,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Kaliurang",
+   "alias": [
+    "Wisata Kaliurang",
+    "Kaliurang Pakem"
+   ],
+   "kategori": "wisata",
+   "lat": -7.6013,
+   "lon": 110.426,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Tebing Breksi",
+   "alias": [
+    "Breksi"
+   ],
+   "kategori": "wisata",
+   "lat": -7.7822,
+   "lon": 110.5057,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Kebun Binatang Gembira Loka",
+   "alias": [
+    "Gembira Loka",
+    "Gembiraloka",
+    "GL Zoo",
+    "Kebun Binatang Jogja"
+   ],
+   "kategori": "wisata",
+   "lat": -7.8062,
+   "lon": 110.3965,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Taman Pintar Yogyakarta",
+   "alias": [
+    "Taman Pintar"
+   ],
+   "kategori": "wisata",
+   "lat": -7.8002,
+   "lon": 110.3678,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Benteng Vredeburg",
+   "alias": [
+    "Museum Benteng Vredeburg",
+    "Vredeburg"
+   ],
+   "kategori": "wisata",
+   "lat": -7.8001,
+   "lon": 110.3663,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Titik Nol Kilometer Yogyakarta",
+   "alias": [
+    "Nol Kilometer",
+    "Titik Nol",
+    "Nol KM",
+    "0 KM Jogja"
+   ],
+   "kategori": "wisata",
+   "lat": -7.801,
+   "lon": 110.3647,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Masjid Gedhe Kauman",
+   "alias": [
+    "Masjid Gede Kauman",
+    "Masjid Agung Kauman",
+    "Masjid Gedhe"
+   ],
+   "kategori": "religi",
+   "lat": -7.8053,
+   "lon": 110.3624,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Stadion Mandala Krida",
+   "alias": [
+    "Mandala Krida"
+   ],
+   "kategori": "olahraga",
+   "lat": -7.7974,
+   "lon": 110.3867,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Stadion Maguwoharjo",
+   "alias": [
+    "Maguwoharjo",
+    "Stadion Sleman"
+   ],
+   "kategori": "olahraga",
+   "lat": -7.75115,
+   "lon": 110.41823,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Jogja Expo Center",
+   "alias": [
+    "JEC",
+    "JEC Jogja"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.8003,
+   "lon": 110.4105,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Goa Pindul",
+   "alias": [
+    "Pindul"
+   ],
+   "kategori": "wisata",
+   "lat": -7.9325,
+   "lon": 110.6475,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Embung Nglanggeran",
+   "alias": [
+    "Gunung Api Purba Nglanggeran",
+    "Nglanggeran"
+   ],
+   "kategori": "wisata",
+   "lat": -7.8443,
+   "lon": 110.5441,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Makam Raja Imogiri",
+   "alias": [
+    "Imogiri",
+    "Pajimatan Imogiri",
+    "Makam Imogiri"
+   ],
+   "kategori": "religi",
+   "lat": -7.9325,
+   "lon": 110.3893,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Prawirotaman",
+   "alias": [
+    "Jalan Prawirotaman",
+    "Kampung Prawirotaman",
+    "Jl Prawirotaman"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.8187,
+   "lon": 110.3687,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Sosrowijayan",
+   "alias": [
+    "Jalan Sosrowijayan",
+    "Sosro",
+    "Jl Sosrowijayan"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.7915,
+   "lon": 110.3611,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Gedung Agung Yogyakarta",
+   "alias": [
+    "Istana Kepresidenan Yogyakarta",
+    "Istana Yogyakarta",
+    "Gedung Agung"
+   ],
+   "kategori": "pemerintahan",
+   "lat": -7.8003,
+   "lon": 110.3657,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Kompleks Kepatihan",
+   "alias": [
+    "Kepatihan",
+    "Kantor Gubernur DIY",
+    "Kantor Gubernur Yogyakarta"
+   ],
+   "kategori": "pemerintahan",
+   "lat": -7.7997,
+   "lon": 110.3669,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Universitas Ahmad Dahlan",
+   "alias": [
+    "UAD",
+    "Ahmad Dahlan",
+    "Kampus UAD"
+   ],
+   "kategori": "kampus",
+   "lat": -7.83361,
+   "lon": 110.38258,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Universitas Teknologi Yogyakarta",
+   "alias": [
+    "UTY"
+   ],
+   "kategori": "kampus",
+   "lat": -7.7483,
+   "lon": 110.35526,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Universitas PGRI Yogyakarta",
+   "alias": [
+    "UPY",
+    "PGRI Yogyakarta"
+   ],
+   "kategori": "kampus",
+   "lat": -7.80572,
+   "lon": 110.34137,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Institut Sains dan Teknologi AKPRIND",
+   "alias": [
+    "AKPRIND",
+    "IST AKPRIND"
+   ],
+   "kategori": "kampus",
+   "lat": -7.78475,
+   "lon": 110.38556,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Universitas Janabadra",
+   "alias": [
+    "Janabadra"
+   ],
+   "kategori": "kampus",
+   "lat": -7.78387,
+   "lon": 110.35737,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Universitas Mercu Buana Yogyakarta",
+   "alias": [
+    "UMBY",
+    "Mercu Buana Jogja"
+   ],
+   "kategori": "kampus",
+   "lat": -7.7629,
+   "lon": 110.41387,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Universitas Widya Mataram",
+   "alias": [
+    "UWM",
+    "Widya Mataram"
+   ],
+   "kategori": "kampus",
+   "lat": -7.80648,
+   "lon": 110.35838,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Universitas Alma Ata",
+   "alias": [
+    "Alma Ata",
+    "UAA"
+   ],
+   "kategori": "kampus",
+   "lat": -7.81844,
+   "lon": 110.32419,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "SMA Negeri 1 Yogyakarta",
+   "alias": [
+    "SMA 1 Yogyakarta",
+    "SMAN 1 Jogja",
+    "SMA Teladan",
+    "Teladan"
+   ],
+   "kategori": "sekolah",
+   "lat": -7.80005,
+   "lon": 110.35265,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "SMA Negeri 3 Yogyakarta",
+   "alias": [
+    "SMA 3 Yogyakarta",
+    "SMAN 3 Jogja",
+    "SMA 3 Jogja"
+   ],
+   "kategori": "sekolah",
+   "lat": -7.78627,
+   "lon": 110.37328,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "SMA Negeri 6 Yogyakarta",
+   "alias": [
+    "SMA 6 Yogyakarta",
+    "SMAN 6 Jogja",
+    "SMA 6 Jogja"
+   ],
+   "kategori": "sekolah",
+   "lat": -7.78136,
+   "lon": 110.3732,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "SMA Negeri 8 Yogyakarta",
+   "alias": [
+    "SMA 8 Yogyakarta",
+    "SMAN 8 Jogja",
+    "SMA 8 Jogja"
+   ],
+   "kategori": "sekolah",
+   "lat": -7.79989,
+   "lon": 110.39569,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "SMA Kolese De Britto",
+   "alias": [
+    "De Britto",
+    "Kolese De Britto"
+   ],
+   "kategori": "sekolah",
+   "lat": -7.7821,
+   "lon": 110.39343,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "SMA Muhammadiyah 1 Yogyakarta",
+   "alias": [
+    "Muhi",
+    "SMA Muhi"
+   ],
+   "kategori": "sekolah",
+   "lat": -7.7739,
+   "lon": 110.36655,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "RSUD Sleman",
+   "alias": [
+    "RS Sleman",
+    "RSUD Sleman Murangan"
+   ],
+   "kategori": "kesehatan",
+   "lat": -7.68746,
+   "lon": 110.34231,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "RSUD Panembahan Senopati",
+   "alias": [
+    "RS Panembahan Senopati",
+    "RSUD Bantul"
+   ],
+   "kategori": "kesehatan",
+   "lat": -7.89265,
+   "lon": 110.33821,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "RS Condong Catur",
+   "alias": [
+    "RS Condongcatur"
+   ],
+   "kategori": "kesehatan",
+   "lat": -7.75428,
+   "lon": 110.40577,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Lippo Plaza Jogja",
+   "alias": [
+    "Lippo Plaza"
+   ],
+   "kategori": "belanja",
+   "lat": -7.78403,
+   "lon": 110.39065,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Sleman City Hall",
+   "alias": [
+    "SCH Sleman"
+   ],
+   "kategori": "belanja",
+   "lat": -7.72018,
+   "lon": 110.36191,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Pakuwon Mall Jogja",
+   "alias": [
+    "Pakuwon Mall",
+    "Pakuwon Jogja"
+   ],
+   "kategori": "belanja",
+   "lat": -7.76,
+   "lon": 110.399,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Transmart Maguwo",
+   "alias": [
+    "Transmart Jogja"
+   ],
+   "kategori": "belanja",
+   "lat": -7.78173,
+   "lon": 110.42006,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Stasiun Wates",
+   "alias": [
+    "Stasiun Wates Kulon Progo"
+   ],
+   "kategori": "transportasi",
+   "lat": -7.85983,
+   "lon": 110.15688,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Terminal Condongcatur",
+   "alias": [
+    "Terminal Condong Catur"
+   ],
+   "kategori": "transportasi",
+   "lat": -7.75686,
+   "lon": 110.39568,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Terminal Wates",
+   "alias": [
+    "Terminal Bus Wates"
+   ],
+   "kategori": "transportasi",
+   "lat": -7.86434,
+   "lon": 110.15123,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Pasar Kranggan",
+   "alias": [
+    "Kranggan"
+   ],
+   "kategori": "pasar",
+   "lat": -7.78254,
+   "lon": 110.36571,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Pasar Demangan",
+   "alias": [
+    "Demangan"
+   ],
+   "kategori": "pasar",
+   "lat": -7.78107,
+   "lon": 110.38856,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Pasar Giwangan",
+   "alias": [
+    "Pasar Induk Giwangan",
+    "Pasar Buah Giwangan"
+   ],
+   "kategori": "pasar",
+   "lat": -7.83173,
+   "lon": 110.38907,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Pasar Gamping",
+   "alias": [
+    "Gamping"
+   ],
+   "kategori": "pasar",
+   "lat": -7.80076,
+   "lon": 110.32352,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Jalan Gejayan",
+   "alias": [
+    "Jl Gejayan",
+    "Gejayan",
+    "Jalan Affandi",
+    "Jl Affandi"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.75844,
+   "lon": 110.39574,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Seturan",
+   "alias": [
+    "Jalan Seturan",
+    "Seturan Raya",
+    "Jl Seturan"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.76975,
+   "lon": 110.40984,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Jalan Parangtritis",
+   "alias": [
+    "Jl Parangtritis",
+    "Jalan Parangtritis Bantul"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.81853,
+   "lon": 110.36816,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Jalan Wonosari",
+   "alias": [
+    "Jl Wonosari",
+    "Jalan Jogja Wonosari"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.8108,
+   "lon": 110.40539,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Ring Road Utara",
+   "alias": [
+    "Ringroad Utara",
+    "Ring Road Utara Jogja"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.75055,
+   "lon": 110.36795,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Ring Road Barat",
+   "alias": [
+    "Ringroad Barat",
+    "Ring Road Barat Jogja"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.79232,
+   "lon": 110.33048,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Condongcatur",
+   "alias": [
+    "Condong Catur"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.75507,
+   "lon": 110.39941,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Babarsari",
+   "alias": [
+    "Jalan Babarsari",
+    "Jl Babarsari"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.78044,
+   "lon": 110.41453,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Kotabaru",
+   "alias": [
+    "Kota Baru Yogyakarta",
+    "Kotabaru Jogja"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.78589,
+   "lon": 110.37423,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Pogung",
+   "alias": [
+    "Pogung Baru",
+    "Jalan Pogung"
+   ],
+   "kategori": "kawasan",
+   "lat": -7.75938,
+   "lon": 110.37739,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Gudeg Yu Djum Wijilan",
+   "alias": [
+    "Gudeg Yu Djum",
+    "Yu Djum",
+    "Gudeg Wijilan",
+    "Wijilan"
+   ],
+   "kategori": "kuliner",
+   "lat": -7.80454,
+   "lon": 110.36689,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Kampung Bakpia Pathuk",
+   "alias": [
+    "Bakpia Pathuk",
+    "Pathuk"
+   ],
+   "kategori": "kuliner",
+   "lat": -7.79688,
+   "lon": 110.36095,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Candi Sambisari",
+   "alias": [
+    "Sambisari"
+   ],
+   "kategori": "wisata",
+   "lat": -7.76237,
+   "lon": 110.44695,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Heha Sky View",
+   "alias": [
+    "Heha Skyview",
+    "HeHa Sky View Gunungkidul"
+   ],
+   "kategori": "wisata",
+   "lat": -7.84913,
+   "lon": 110.47823,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Bukit Bintang",
+   "alias": [
+    "Bukit Bintang Gunungkidul",
+    "Bukit Bintang Patuk"
+   ],
+   "kategori": "wisata",
+   "lat": -7.84608,
+   "lon": 110.4797,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Pantai Drini",
+   "alias": [
+    "Drini"
+   ],
+   "kategori": "pantai",
+   "lat": -8.1381,
+   "lon": 110.5784,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Pantai Sundak",
+   "alias": [
+    "Sundak"
+   ],
+   "kategori": "pantai",
+   "lat": -8.14718,
+   "lon": 110.60808,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Pantai Pok Tunggal",
+   "alias": [
+    "Pok Tunggal"
+   ],
+   "kategori": "pantai",
+   "lat": -8.15548,
+   "lon": 110.62188,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Kalibiru",
+   "alias": [
+    "Wisata Kalibiru",
+    "Hutan Kalibiru"
+   ],
+   "kategori": "wisata",
+   "lat": -7.80348,
+   "lon": 110.12575,
+   "keyakinan": "perlu_tinjau"
+  },
+  {
+   "nama": "Museum Sonobudoyo",
+   "alias": [
+    "Sonobudoyo"
+   ],
+   "kategori": "wisata",
+   "lat": -7.80214,
+   "lon": 110.36378,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Museum Affandi",
+   "alias": [
+    "Affandi Museum"
+   ],
+   "kategori": "wisata",
+   "lat": -7.78275,
+   "lon": 110.39633,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Polda DIY",
+   "alias": [
+    "Polda Yogyakarta",
+    "Markas Polda DIY"
+   ],
+   "kategori": "pemerintahan",
+   "lat": -7.75735,
+   "lon": 110.40072,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Balai Kota Yogyakarta",
+   "alias": [
+    "Kantor Walikota Yogyakarta",
+    "Balai Kota Jogja"
+   ],
+   "kategori": "pemerintahan",
+   "lat": -7.80037,
+   "lon": 110.39117,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Kompleks Pemkab Sleman",
+   "alias": [
+    "Pemkab Sleman",
+    "Kantor Bupati Sleman"
+   ],
+   "kategori": "pemerintahan",
+   "lat": -7.71683,
+   "lon": 110.35596,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Stadion Kridosono",
+   "alias": [
+    "Kridosono"
+   ],
+   "kategori": "olahraga",
+   "lat": -7.7877,
+   "lon": 110.3743,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Stadion Sultan Agung",
+   "alias": [
+    "Stadion Sultan Agung Bantul"
+   ],
+   "kategori": "olahraga",
+   "lat": -7.87529,
+   "lon": 110.38022,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Masjid Jogokariyan",
+   "alias": [
+    "Jogokariyan"
+   ],
+   "kategori": "religi",
+   "lat": -7.82424,
+   "lon": 110.36438,
+   "keyakinan": "sedang"
+  },
+  {
+   "nama": "Gereja Ganjuran",
+   "alias": [
+    "Candi Hati Kudus Yesus Ganjuran",
+    "Ganjuran"
+   ],
+   "kategori": "religi",
+   "lat": -7.92625,
+   "lon": 110.3193,
+   "keyakinan": "perlu_tinjau"
+  }
+ ]
+}

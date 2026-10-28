@@ -1,14 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 
-function LoaderContent() {
+const SEEN_KEY = 'gardu:intro-seen';
+const SHOW_MS = 700;
+
+/** Pembuka hanya sekali per sesi peramban (tab); muat ulang atau pindah halaman tidak mengulanginya. */
+export default function PageLoader() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 850);
+    let seen = false;
+
+    try {
+      seen = sessionStorage.getItem(SEEN_KEY) === '1';
+      sessionStorage.setItem(SEEN_KEY, '1');
+    } catch {
+      // Penyimpanan diblokir: anggap belum pernah, tampilkan singkat.
+    }
+
+    const t = setTimeout(() => setLoading(false), seen ? 0 : SHOW_MS);
 
     return () => clearTimeout(t);
   }, []);
@@ -22,7 +34,7 @@ function LoaderContent() {
           exit={{
             opacity: 0,
             transition: {
-              duration: 0.45,
+              duration: 0.3,
               ease: 'easeOut',
             },
           }}
@@ -45,9 +57,9 @@ function LoaderContent() {
                   opacity: [0.7, 0],
                 }}
                 transition={{
-                  duration: 1.8,
+                  duration: 1.2,
                   repeat: Infinity,
-                  delay: i * 0.55,
+                  delay: i * 0.3,
                   ease: 'easeOut',
                 }}
               />
@@ -76,7 +88,7 @@ function LoaderContent() {
                   },
                 }}
                 transition={{
-                  duration: 1.1,
+                  duration: 0.5,
                   ease: 'easeInOut',
                 }}
               />
@@ -96,8 +108,8 @@ function LoaderContent() {
                   },
                 }}
                 transition={{
-                  duration: 0.7,
-                  delay: 0.7,
+                  duration: 0.3,
+                  delay: 0.3,
                   ease: 'easeOut',
                 }}
               />
@@ -117,8 +129,8 @@ function LoaderContent() {
                   y: 0,
                 }}
                 transition={{
-                  delay: 0.15 * i,
-                  duration: 0.4,
+                  delay: 0.06 * i,
+                  duration: 0.25,
                 }}
               >
                 {ch}
@@ -135,7 +147,7 @@ function LoaderContent() {
               opacity: 1,
             }}
             transition={{
-              delay: 0.9,
+              delay: 0.3,
             }}
           >
             Memuat peta keselamatan...
@@ -144,10 +156,4 @@ function LoaderContent() {
       )}
     </AnimatePresence>
   );
-}
-
-export default function PageLoader() {
-  const pathname = usePathname();
-
-  return <LoaderContent key={pathname} />;
 }

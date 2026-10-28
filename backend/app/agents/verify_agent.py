@@ -11,7 +11,11 @@ from supabase import Client
 from app.agents.embedding_service import generate_embedding
 from app.agents.risk_agent import refresh_risk_scores_safely
 from app.core.config import Settings, get_settings
+from app.core.areas import COORDINATE_SOURCE_GEOCODER, TINGKAT_KECAMATAN, TINGKAT_KELURAHAN
 from app.core.db_retry import execute_with_retry
+from app.core.geo import haversine_meters
+from app.core.geocoding import geocode_location
+from app.core.privacy import mask_personal_data
 from app.core.safe_log import safe_error_summary
 from app.core.supabase_client import get_supabase
 from app.core.timeutil import WIB, to_wib
@@ -121,11 +125,14 @@ def _rate_limit_wait_seconds(exc: Exception, attempt: int) -> float | None:
 
 def _invoke_extraction(description: str, api_key: str) -> ExtractedEntities | None:
     """Satu kali panggilan Gemini (structured output). Exception dibiarkan naik
-    ke pemanggil supaya bisa dibedakan rate limit vs error lain."""
+    ke pemanggil supaya bisa dibedakan rate limit vs error lain. `max_retries=1`: retry 429
+    ditangani sendiri di extract_incident_type, jadi retry bawaan library (6x) tidak boleh
+    menumpuk di atasnya."""
     llm = ChatGoogleGenerativeAI(
         model=EXTRACTION_MODEL,
         google_api_key=api_key,
-        timeout=10,
+        timeout=get_settings().gemini_timeout_seconds,
+        max_retries=1,
     )
     structured_llm = llm.with_structured_output(ExtractedEntities)
     return structured_llm.invoke(
@@ -233,12 +240,61 @@ def _fetch_report(supabase: Client, report_id: str) -> dict | None:
     response = execute_with_retry(
         supabase.table("reports")
         .select(
-            "id,description,location_text,latitude,longitude,occurred_at,incident_id,status,extracted_incident_type"
+            "id,description,location_text,latitude,longitude,occurred_at,incident_id,status,extracted_incident_type,"
+            "jalan,coordinate_source,incident_type_hint"
         )
         .eq("id", report_id)
         .limit(1)
     )
     return response.data[0] if response.data else None
+
+
+def _refine_location(supabase: Client, report: dict, settings: Settings) -> None:
+    """Perhalus koordinat laporan lewat Mapbox di BACKGROUND (menggantikan geocoding sinkron di
+    endpoint, yang menahan respons submit 3-19 dtk). `report` diperbarui di tempat bila berhasil.
+
+    Kapan dijalankan:
+    - koordinat awal berupa pusat kelurahan/kecamatan DAN pelapor mengisi `jalan` (ada alamat yang
+      lebih rinci dari pusat wilayah). Tanpa jalan, geocoding hanya menebak pusat wilayah yang sama,
+      jadi panggilan (dan kuota Mapbox) dihemat;
+    - jalur lama: laporan tanpa koordinat sama sekali (mencoba teks lokasi).
+    Titik dari pelapor sendiri (`client`) dan hasil geocoding sebelumnya tidak diubah.
+
+    Hasil diterima HANYA bila di dalam DIY (dijamin geocode_location) dan, untuk jalur berjenjang,
+    dalam `report_geocode_max_distance_meters` dari pusat wilayah terpilih; selain itu koordinat awal
+    tetap dipakai. Kegagalan apa pun TIDAK menghentikan verifikasi, dan teks/koordinat tidak dicatat.
+    """
+    source = report.get("coordinate_source")
+    latitude, longitude = report.get("latitude"), report.get("longitude")
+    anchor: tuple[float, float] | None = None
+    if source in (TINGKAT_KELURAHAN, TINGKAT_KECAMATAN):
+        if not report.get("jalan") or latitude is None or longitude is None:
+            return
+        anchor = (float(latitude), float(longitude))
+    elif source is not None or latitude is not None:
+        return  # titik dari pelapor, hasil geocoding sebelumnya, atau laporan lama yang sudah berkoordinat
+
+    try:
+        point = geocode_location(report["location_text"])
+    except Exception as exc:  # noqa: BLE001 - geocoding hanya penyempurna; tidak boleh menggagalkan verifikasi
+        logger.warning("Penyempurnaan lokasi dilewati: %s", safe_error_summary(exc))
+        return
+    if point is None:
+        return
+    if anchor is not None and haversine_meters(anchor, point) > settings.report_geocode_max_distance_meters:
+        logger.info("Hasil geocoding alamat terlalu jauh dari pusat wilayah terpilih, diabaikan")
+        return
+
+    try:
+        execute_with_retry(
+            supabase.table("reports")
+            .update({"latitude": point[0], "longitude": point[1], "coordinate_source": COORDINATE_SOURCE_GEOCODER})
+            .eq("id", report["id"])
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Koordinat hasil geocoding tidak tersimpan: %s", safe_error_summary(exc))
+        return
+    report.update(latitude=point[0], longitude=point[1], coordinate_source=COORDINATE_SOURCE_GEOCODER)
 
 
 def _flag_report(supabase: Client, report_id: str, status: str, reason: str) -> None:
@@ -475,7 +531,10 @@ def process_report_verification(report_id: str) -> None:
             return
 
         settings = get_settings()
-        reason = assess_report_text(report["description"], settings)
+        # Baris lama (disimpan sebelum masking ada) bisa masih memuat data pribadi: samarkan lagi
+        # sebelum teks menyentuh Gemini. Idempoten untuk teks yang sudah disamarkan.
+        description = mask_personal_data(report["description"])
+        reason = assess_report_text(description, settings)
         if reason is not None:
             # REQ-F-012: teks jelas tidak wajar -> tandai untuk moderator, jangan buang
             # token AI/embedding dan jangan jadikan insiden. Log hanya kode alasan.
@@ -483,8 +542,11 @@ def process_report_verification(report_id: str) -> None:
             logger.info("Laporan %s ditandai hoaks (alasan=%s)", report_id, reason)
             return
 
-        incident_type = report.get("extracted_incident_type") or extract_incident_type(report["description"])
-        type_is_new = incident_type is not None and not report.get("extracted_incident_type")
+        # Hasil Gemini diutamakan; bila gagal, pilihan dropdown pelapor jadi petunjuk untuk insiden. Petunjuk TIDAK
+        # disimpan sebagai `extracted_incident_type` (itu hasil ekstraksi), jadi proses ulang tetap mencoba Gemini.
+        extracted_type = report.get("extracted_incident_type") or extract_incident_type(description)
+        incident_type = extracted_type or report.get("incident_type_hint")
+        type_is_new = extracted_type is not None and not report.get("extracted_incident_type")
 
         if report.get("incident_id"):
             # Sudah diklasterkan sebelumnya (proses ulang): cukup lengkapi jenis kejadian.
@@ -495,7 +557,9 @@ def process_report_verification(report_id: str) -> None:
             logger.info("Laporan %s sudah diklasterkan, klasterisasi dilewati", report_id)
             return
 
-        embedding = generate_embedding(report["description"])
+        _refine_location(supabase, report, settings)  # koordinat dipakai incident & pencarian kecocokan di bawah
+
+        embedding = generate_embedding(description)
 
         update_fields: dict = {}
         if type_is_new:

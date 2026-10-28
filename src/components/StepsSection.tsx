@@ -14,7 +14,7 @@ const STEPS = [
   {
     n: '02',
     title: 'AI memverifikasi',
-    desc: 'Entitas diekstrak, laporan diklasterkan, duplikat ditandai.',
+    desc: 'Jenis kejadian dikategorikan AI, laporan mirip dikelompokkan, duplikat dan teks tidak wajar ditandai untuk ditinjau.',
   },
   {
     n: '03',
@@ -132,9 +132,9 @@ function ReportIllustration() {
 
 function AIIllustration() {
   const entities = [
-    { label: 'Lokasi', value: 'Entitas lokasi terdeteksi' },
-    { label: 'Waktu', value: 'Informasi waktu terdeteksi' },
-    { label: 'Kategori', value: 'Jenis kejadian dikenali' },
+    { label: 'Lokasi', value: 'Wilayah dari formulir' },
+    { label: 'Waktu', value: 'Waktu dari formulir' },
+    { label: 'Kategori', value: 'Jenis kejadian dikategorikan AI' },
   ];
 
   return (
@@ -174,7 +174,7 @@ function AIIllustration() {
             transition={{ duration: 1.8, repeat: Infinity }}
             className="text-[9px] uppercase tracking-widest text-emerald-300"
           >
-            Extracting entities
+            Mengategorikan jenis kejadian
           </motion.span>
           <div className="h-px flex-1 bg-emerald-400/20" />
         </div>
@@ -485,13 +485,6 @@ function CommunityIllustration() {
 }
 
 function StepIllustration({ step }: { step: number }) {
-  const illustrations = [
-    <ReportIllustration key="report" />,
-    <AIIllustration key="ai" />,
-    <RiskIllustration key="risk" />,
-    <CommunityIllustration key="community" />,
-  ];
-
   return (
 <div className="relative flex h-[350px] w-full items-center justify-center overflow-hidden">
   <div className="w-full origin-center scale-[0.8]">

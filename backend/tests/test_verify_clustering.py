@@ -231,7 +231,6 @@ def test_api_stores_naive_time_as_timezone_aware_wib(monkeypatch):
                 data=[{"id": "r-1", "status": "menunggu_verifikasi", "created_at": "2026-09-20T00:00:00+00:00"}]
             )
 
-    monkeypatch.setattr(reports_module, "geocode_location", lambda _t: None)
     monkeypatch.setattr(reports_module, "process_report_verification", lambda _id: None)
     app.dependency_overrides[get_supabase] = lambda: SimpleNamespace(table=lambda _n: _Table())
     naive = (datetime.now(WIB) - timedelta(hours=3)).replace(tzinfo=None, microsecond=0)

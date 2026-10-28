@@ -42,10 +42,9 @@ class _FakeSupabase:
         return _FakeTable(self._row, self.inserted_records)
 
 
-def _submit_valid_report(fake_supabase, monkeypatch, geocode_result):
-    """Submit 1 laporan valid dengan geocoding di-MOCK (test tidak boleh
-    memanggil Mapbox asli) dan verification agent tidak dijalankan."""
-    monkeypatch.setattr(reports_module, "geocode_location", lambda _text: geocode_result)
+def _submit_valid_report(fake_supabase, monkeypatch, **extra):
+    """Submit 1 laporan valid (jalur lama: location_text) dengan verification agent tidak dijalankan.
+    Endpoint tidak lagi memanggil geocoding (itu pindah ke background task)."""
     monkeypatch.setattr(reports_module, "process_report_verification", lambda _id: None)
     app.dependency_overrides[get_supabase] = lambda: fake_supabase
     try:
@@ -55,17 +54,18 @@ def _submit_valid_report(fake_supabase, monkeypatch, geocode_result):
                 "description": "Ada sekelompok remaja bawa senjata tajam di simpang jalan.",
                 "location_text": "Simpang Jalan Kaliurang km 5",
                 "occurred_at": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(),
+                **extra,
             },
         )
     finally:
         app.dependency_overrides.pop(get_supabase, None)
 
 
-def test_geocoded_coordinates_are_saved_with_the_report(monkeypatch):
+def test_client_coordinates_inside_diy_are_saved_with_the_report(monkeypatch):
     fake_row = {"id": "22222222-2222-2222-2222-222222222222", "status": "menunggu_verifikasi", "created_at": "2026-09-19T00:00:00+00:00"}
     fake_supabase = _FakeSupabase(fake_row)
 
-    response = _submit_valid_report(fake_supabase, monkeypatch, geocode_result=(-7.7956, 110.3695))
+    response = _submit_valid_report(fake_supabase, monkeypatch, latitude=-7.7956, longitude=110.3695)
 
     assert response.status_code == 201
     saved = fake_supabase.inserted_records[0]
@@ -73,18 +73,19 @@ def test_geocoded_coordinates_are_saved_with_the_report(monkeypatch):
     assert saved["longitude"] == 110.3695
 
 
-def test_report_is_still_saved_with_null_coordinates_when_geocoding_fails(monkeypatch):
-    """Geocoding gagal/di luar Yogyakarta (geocode_location -> None) TIDAK boleh
-    menolak laporan: koordinat NULL, laporan tetap tersimpan."""
+def test_legacy_report_without_coordinates_is_saved_with_null_coordinates_and_no_geocoding(monkeypatch):
+    """Jalur lama tanpa titik: koordinat NULL saat disimpan (geocoding Mapbox dikerjakan background
+    task, bukan menahan respons ini)."""
     fake_row = {"id": "33333333-3333-3333-3333-333333333333", "status": "menunggu_verifikasi", "created_at": "2026-09-19T00:00:00+00:00"}
     fake_supabase = _FakeSupabase(fake_row)
 
-    response = _submit_valid_report(fake_supabase, monkeypatch, geocode_result=None)
+    response = _submit_valid_report(fake_supabase, monkeypatch)
 
     assert response.status_code == 201
     saved = fake_supabase.inserted_records[0]
     assert saved["latitude"] is None
     assert saved["longitude"] is None
+    assert "kabkota_kode" not in saved  # jalur lama tidak menyentuh kolom wilayah
 
 
 def test_submit_report_happy_path(monkeypatch):
@@ -95,8 +96,6 @@ def test_submit_report_happy_path(monkeypatch):
         "created_at": occurred_at.isoformat(),
     }
     app.dependency_overrides[get_supabase] = lambda: _FakeSupabase(fake_row)
-    # Geocoding di-MOCK: test tidak boleh memakai kuota Mapbox asli.
-    monkeypatch.setattr(reports_module, "geocode_location", lambda _text: None)
     # Endpoint ini cuma diuji sampai laporan tersimpan — proses verifikasi
     # asli (panggilan AI/network) diuji terpisah di test_verify_agent.py.
     verification_calls: list[str] = []
@@ -127,9 +126,6 @@ def test_submit_report_happy_path(monkeypatch):
 def test_failed_insert_returns_502_and_log_never_contains_report_text(monkeypatch, caplog):
     """Error database bisa memuat isi baris (mis. 'Failing row contains ...') —
     log server tidak boleh membawa teks laporan maupun traceback-nya."""
-    # Geocoding di-MOCK: test tidak boleh memakai kuota Mapbox asli.
-    monkeypatch.setattr(reports_module, "geocode_location", lambda _text: None)
-
     class _FailingTable:
         def insert(self, _record):
             return self
@@ -179,7 +175,7 @@ def test_rate_limiter_blocks_report_after_limit_and_starts_clean_each_test(monke
     limit = get_settings().rate_limit_max_requests
 
     statuses = [
-        _submit_valid_report(fake_supabase, monkeypatch, geocode_result=None).status_code
+        _submit_valid_report(fake_supabase, monkeypatch).status_code
         for _ in range(limit + 1)
     ]
 

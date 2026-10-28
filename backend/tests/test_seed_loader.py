@@ -57,24 +57,38 @@ def test_seed_set_has_19_unique_entries_with_unique_times_and_a_source_each():
 
 def test_uncertain_times_are_flagged_explicitly_in_the_source_column_and_all_differ():
     uncertain = [seed for seed in SEED_INCIDENTS if seed.get("perkiraan_waktu")]
-    assert len(uncertain) == 7  # Gedongkuning, Kotabaru, Caturharjo, Terban, Canden, Cokroaminoto, Giwangan
+    # 7 entri riset + 3 entri lama yang sumbernya hanya menyebut TAHUN (tanggal & jam pasti placeholder)
+    assert len(uncertain) == 10
+    assert {s["location_text"] for s in uncertain} >= OLD_KEPT
     for seed in uncertain:
         assert "[PERKIRAAN]" in seed["sumber"] and "BUKAN konfirmasi pasti" in seed["sumber"]
     assert len({seed["incident_time"] for seed in uncertain}) == len(uncertain)
 
-    exact = [seed for seed in SEED_INCIDENTS if seed.get("batch") == RESEARCH_BATCH and not seed.get("perkiraan_waktu")]
+    exact = [seed for seed in SEED_INCIDENTS if not seed.get("perkiraan_waktu")]
+    assert len(exact) == 9
     assert all("[PERKIRAAN]" not in seed["sumber"] for seed in exact)  # penanda hanya untuk yang memang perkiraan
+    # Konsisten dua arah: setiap sumber yang menyebut [PERKIRAAN] memang ditandai perkiraan_waktu.
+    assert all(bool(seed.get("perkiraan_waktu")) == ("[PERKIRAAN]" in seed["sumber"]) for seed in SEED_INCIDENTS)
 
 
-def test_research_entries_contain_no_victim_identity_outside_the_given_urls():
+def test_no_entry_contains_victim_identity_outside_the_given_urls():
+    """Berlaku untuk SEMUA 19 entri (dulu 3 entri lama dikecualikan dan ada 'korban pelajar SMP')."""
     for seed in SEED_INCIDENTS:
-        if seed.get("batch") != RESEARCH_BATCH:
-            continue  # 3 entri lama tidak diubah dan di luar cakupan aturan batch ini
         scanned = " | ".join(
             [seed["location_text"], seed["incident_type"], _text_without_urls(seed["sumber"])]
         ).lower()
         for pattern in _VICTIM_IDENTITY_PATTERNS:
             assert not re.search(pattern, scanned), f"{pattern!r} ditemukan pada: {seed['location_text']}"
+    miliran = next(s for s in SEED_INCIDENTS if s["location_text"].startswith("Jalan Miliran"))
+    assert miliran["incident_type"] == "Klitih" and "pelajar" not in miliran["sumber"].lower()
+
+
+def test_demak_ijo_uses_a_geocode_query_that_lands_near_the_real_place():
+    # Uji nyata: teks lengkap ter-geocode ke pusat kota Sleman (~9,8 km dari Demak Ijo di Gamping menurut OSM);
+    # "Banyuraden, Gamping, Sleman" jatuh ~0,6 km dari titik OSM-nya.
+    demak = next(s for s in SEED_INCIDENTS if s["location_text"] == "Demak Ijo, Sleman, Yogyakarta")
+    assert demak["geocode_query"] == "Banyuraden, Gamping, Sleman"
+    assert demak["location_text"] == "Demak Ijo, Sleman, Yogyakarta"  # teks tetap, sehingga baris lama diperbarui di tempat
 
 
 def test_updated_entries_keep_the_link_to_their_old_row_and_kept_entries_are_untouched():
@@ -194,6 +208,8 @@ def test_loader_updates_the_two_old_rows_in_place_and_inserts_only_14_new(loader
     # Gedongkuning memakai query geocoding khusus (teks lengkap akan meleset ke pusat kota Bantul).
     assert "Gedongkuning, Kotagede, Yogyakarta" in queries
     assert "Jalan Gedongkuning, perbatasan Kabupaten Bantul dan Kota Yogyakarta" not in queries
+    # Demak Ijo juga memakai query khusus; teks lengkap yang meleset ke pusat kota Sleman tidak dipakai.
+    assert "Banyuraden, Gamping, Sleman" in queries and "Demak Ijo, Sleman, Yogyakarta" not in queries
 
 
 def test_school_names_are_removed_from_location_and_existing_rows_are_updated_in_place(loader_env):

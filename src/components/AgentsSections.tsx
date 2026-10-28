@@ -13,21 +13,21 @@ const AGENTS = [
   {
     name: 'Report Analysis Agent',
     role: 'Memahami & mengelompokkan laporan',
-    desc: 'Gemini membaca laporan bebas dari warga dan mengubahnya menjadi data terstruktur (lokasi, waktu, dan jenis kejadian), lalu mendeteksi laporan serupa dalam 24 jam terakhir.',
+    desc: 'Gemini mengategorikan jenis kejadian dari laporan dan membuat embedding untuk mengelompokkan laporan serupa; kejadian dikuatkan bila ada minimal dua laporan independen.',
     tag: 'Gemini API',
     accent: '#34d399',
   },
   {
     name: 'Risk Prediction Agent',
     role: 'Skor kerawanan per area & periode waktu',
-    desc: 'Menghitung skor kerawanan 0-10 per area dan periode waktu dari kejadian terdokumentasi, lalu menyimpannya untuk peta dan cek rute.',
+    desc: 'Menghitung skor kerawanan 0-10 per area (±1 km) dan periode jam dari kejadian tercatat, dengan bobot kejadian terbaru dan pengali Ramadan. Berbasis aturan, tanpa AI.',
     tag: 'Berbasis aturan',
     accent: '#67e8f9',
   },
   {
     name: 'Safe Route Advisor',
     role: 'Cek risiko sebelum berangkat',
-    desc: 'Mencocokkan asal dan tujuan dengan skor kerawanan area pada periode keberangkatan, lalu memberi status aman, waspada, atau berisiko tinggi.',
+    desc: 'Menelusuri ruas jalan pada rute Mapbox dan memeriksa kejadian tercatat di sekitar jalur pada jam tiba, lalu memberi status aman, waspada, atau berisiko tinggi.',
     tag: 'Berbasis aturan',
     accent: '#c4b5fd',
   },
@@ -172,11 +172,6 @@ export default function AgentsSections() {
     [1, 1, 0.75],
   );
 
-  const hintOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.15, 0.4],
-    [1, 1, 0],
-  );
 
   return (
     <section
@@ -195,8 +190,9 @@ export default function AgentsSections() {
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-500 sm:mt-4 sm:text-base">
-            Gemini digunakan untuk memahami laporan, sedangkan dua agen
-            berbasis aturan menghitung skor kerawanan dan memeriksa rute.
+            Gemini dipakai untuk mengategorikan laporan (dan ringkasan opsional),
+            sedangkan skor kerawanan dan pemeriksaan rute dihitung dengan aturan
+            yang dapat ditelusuri.
           </p>
         </Reveal>
       </div>

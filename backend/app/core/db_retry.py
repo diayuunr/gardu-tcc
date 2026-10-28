@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Protocol
 
 import httpx
@@ -8,6 +9,12 @@ from app.core.safe_log import safe_error_summary
 
 logger = logging.getLogger(__name__)
 
+# Kegagalan tingkat KONEKSI yang wajar dicoba sekali lagi (cepat gagal & tidak mengubah hasil).
+# ReadTimeout sengaja tidak termasuk: retry-nya melipatgandakan waktu tunggu pengguna dan query
+# tulis mungkin sudah diproses server.
+_RETRYABLE = (httpx.RemoteProtocolError, httpx.ConnectError, httpx.ConnectTimeout, httpx.ReadError)
+_RETRY_BACKOFF_SECONDS = 0.2
+
 
 class Executable(Protocol):
     """Query builder Supabase apa pun (select/insert/update/upsert/delete/rpc) yang punya .execute()."""
@@ -16,7 +23,7 @@ class Executable(Protocol):
 
 
 def execute_with_retry(query: Executable) -> PostgrestAPIResponse:
-    """Jalankan query Supabase; retry 1x kalau koneksi diputus server.
+    """Jalankan query Supabase; retry 1x (jeda singkat) kalau koneksi diputus/gagal tersambung.
 
     Di bawah beban paralel (mis. 20 laporan sekaligus) satu client Supabase
     yang dipakai bersama banyak thread lewat HTTP/2 kadang diputus server
@@ -31,6 +38,7 @@ def execute_with_retry(query: Executable) -> PostgrestAPIResponse:
     """
     try:
         return query.execute()
-    except httpx.RemoteProtocolError as exc:
+    except _RETRYABLE as exc:
         logger.warning("Koneksi Supabase terputus (%s), retry 1x", safe_error_summary(exc))
+        time.sleep(_RETRY_BACKOFF_SECONDS)
         return query.execute()

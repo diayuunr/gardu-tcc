@@ -75,20 +75,39 @@ SEED_INCIDENTS = [
         # Hanya tahun yang diketahui dari sumber -> tanggal/jam placeholder,
         # jam dipilih di rentang 21:00-02:00 WIB (pola jam rawan versi JPW).
         "incident_time": "2020-06-14T21:40:00+07:00",
-        "incident_type": "Klitih (korban pelajar SMP)",
-        "sumber": "NU Online, pemberitaan korban pelajar SMP di dekat Makam Gajah (2020)",
+        # Ciri korban (jenjang sekolah) sengaja dibuang: hanya jenis kejadian yang umum (REQ-NF-121/REQ-F-042).
+        "incident_type": "Klitih",
+        "perkiraan_waktu": True,
+        "sumber": (
+            "NU Online, pemberitaan klitih di dekat Makam Gajah (2020). "
+            f"{_PERKIRAAN} Sumber hanya menyebut tahun 2020; tanggal & jam di data ini adalah placeholder "
+            "(perkiraan), BUKAN konfirmasi pasti."
+        ),
     },
     {
         "location_text": "Jalan Kabupaten, Trihanggo, Gamping, Sleman, Yogyakarta",
         "incident_time": "2020-09-09T00:55:00+07:00",
         "incident_type": "Klitih (dua kejadian beruntun)",
-        "sumber": "Pemberitaan 2020, dua kejadian klitih beruntun di lokasi yang sama",
+        "perkiraan_waktu": True,
+        "sumber": (
+            "Pemberitaan 2020, dua kejadian klitih beruntun di lokasi yang sama. "
+            f"{_PERKIRAAN} Sumber hanya menyebut tahun 2020; tanggal & jam di data ini adalah placeholder "
+            "(perkiraan), BUKAN konfirmasi pasti."
+        ),
     },
     {
         "location_text": "Demak Ijo, Sleman, Yogyakarta",
+        # Mapbox men-geocode teks lengkap ke pusat kota Sleman (~9,8 km meleset dari Demak Ijo di Gamping, menurut
+        # OSM). Desa Banyuraden, Gamping, tempat Demak Ijo berada, ter-geocode ~0,6 km dari titik OSM-nya.
+        "geocode_query": "Banyuraden, Gamping, Sleman",
         "incident_time": "2023-10-19T21:55:00+07:00",
         "incident_type": "Bentrok antar kelompok",
-        "sumber": "Pemberitaan 2023, titik awal bentrok antar kelompok",
+        "perkiraan_waktu": True,
+        "sumber": (
+            "Pemberitaan 2023, titik awal bentrok antar kelompok. "
+            f"{_PERKIRAAN} Sumber hanya menyebut tahun 2023; tanggal & jam di data ini adalah placeholder "
+            "(perkiraan), BUKAN konfirmasi pasti."
+        ),
     },
     # --- Entri lama yang DIPERBARUI (insiden sama, jangan insert baru) ------
     {
